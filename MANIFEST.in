@@ -1,0 +1,10 @@
+include *.rst
+include *.toml
+include *.yml
+include LICENSE
+include tox.ini
+recursive-include src *.py
+recursive-include src *.c
+recursive-include src *.h
+recursive-include tests *.py
+recursive-include tests *.bin
