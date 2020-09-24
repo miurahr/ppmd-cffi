@@ -2,7 +2,7 @@
 2017-04-03 : Igor Pavlov : Public domain
 This code is based on PPMd var.H (2001): Dmitry Shkarin : Public domain */
 
-#include "Precomp.h"
+#include "Compiler.h"
 
 #include <string.h>
 
