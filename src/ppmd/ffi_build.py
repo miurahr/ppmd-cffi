@@ -194,8 +194,9 @@ static Byte Read(void *p)
 
 void ppmd_state_init(CPpmd7 *p, unsigned int maxOrder, unsigned int memSize)
 {
-    Ppmd7_Alloc(p, memSize, &allocator);
     Ppmd7_Construct(p);
+    Ppmd7_Alloc(p, memSize, &allocator);
+    Ppmd7_Init(p, maxOrder);
 }
 
 void ppmd_state_close(CPpmd7 *ppmd)
