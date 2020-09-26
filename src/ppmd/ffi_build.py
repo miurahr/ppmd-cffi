@@ -126,10 +126,23 @@ typedef struct
 } CPpmd7z_RangeEnc;
 ''')
 ffibuilder.cdef(r'''
+typedef struct {
+    /* Inherits from IByteOut */
+    void (*Write)(void *p, Byte b);
+    FILE *fp;
+} CharWriter;
+typedef struct {
+    /* Inherits from IByteIn */
+    Byte (*Read)(void *p);
+    FILE *fp;
+    Bool eof;
+} CharReader;
+''')
+ffibuilder.cdef(r'''
 void ppmd_state_init(CPpmd7 *ppmd, unsigned int maxOrder, unsigned int memSize);
 void ppmd_state_close(CPpmd7 *ppmd);
-void ppmd_decompress_init(CPpmd7z_RangeDec *rc, FILE *file);
-void ppmd_compress_init(CPpmd7z_RangeEnc *rc, FILE *file);
+void ppmd_decompress_init(CPpmd7z_RangeDec *rc, CharReader *reader);
+void ppmd_compress_init(CPpmd7z_RangeEnc *rc, CharWriter *write);
 
 void Ppmd7_Construct(CPpmd7 *p);
 void Ppmd7_Init(CPpmd7 *p, unsigned maxOrder);
@@ -139,7 +152,6 @@ void Ppmd7z_RangeEnc_Init(CPpmd7z_RangeEnc *p);
 void Ppmd7z_RangeEnc_FlushData(CPpmd7z_RangeEnc *p);
 void Ppmd7_EncodeSymbol(CPpmd7 *p, CPpmd7z_RangeEnc *rc, int symbol);
 ''')
-
 # -------------------------------------
 ffibuilder.set_source('_ppmd', r'''
 #include "Ppmd7.h"
@@ -160,28 +172,27 @@ static void pfree(ISzAllocPtr ip, void *addr)
 
 static ISzAlloc allocator = { pmalloc, pfree };
 
-struct CharWriter {
+typedef struct {
     /* Inherits from IByteOut */
     void (*Write)(void *p, Byte b);
     FILE *fp;
-};
-
-struct CharReader {
+} CharWriter;
+typedef struct {
     /* Inherits from IByteIn */
     Byte (*Read)(void *p);
     FILE *fp;
     Bool eof;
-};
+} CharReader;
 
 static void Write(void *p, Byte b)
 {
-    struct CharWriter *cw = p;
+    CharWriter *cw = p;
     putc_unlocked(b, cw->fp);
 }
 
 static Byte Read(void *p)
 {
-    struct CharReader *cr = p;
+    CharReader *cr = p;
     if (cr->eof)
 	    return 0;
     int c = getc_unlocked(cr->fp);
@@ -204,17 +215,17 @@ void ppmd_state_close(CPpmd7 *ppmd)
     Ppmd7_Free(ppmd, &allocator);
 }
 
-void ppmd_compress_init(CPpmd7z_RangeEnc *rc, FILE *file)
+void ppmd_compress_init(CPpmd7z_RangeEnc *rc, CharWriter *writer)
 {
-    struct CharWriter writer = { Write, file };
-    rc->Stream = (IByteOut *) &writer;
+    writer->Write = Write;
+    rc->Stream = (IByteOut *) writer;
     Ppmd7z_RangeEnc_Init(rc);
 }
 
-void ppmd_decompress_init(CPpmd7z_RangeDec *rc, FILE *file)
+void ppmd_decompress_init(CPpmd7z_RangeDec *rc, CharReader *reader)
 {
-    struct CharReader reader = { Read, file, 0 };
-    rc->Stream = (IByteIn *) &reader;
+    reader->Read = Read;
+    rc->Stream = (IByteIn *) reader;
     Ppmd7z_RangeDec_Init(rc);
 }
 ''', sources=sources, include_dirs=[SRC_ROOT])

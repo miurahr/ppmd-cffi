@@ -78,7 +78,7 @@ int Ppmd7_DecodeSymbol(CPpmd7 *p, CPpmd7z_RangeDec *rc)
     if ((count = Range_GetThreshold(rc, p->MinContext->SummFreq)) < (hiCnt = s->Freq))
     {
       Byte symbol;
-      Range_Decode(p, 0, s->Freq);
+      Range_Decode(rc, 0, s->Freq);
       p->FoundState = s;
       symbol = s->Symbol;
       Ppmd7_Update1_0(p);

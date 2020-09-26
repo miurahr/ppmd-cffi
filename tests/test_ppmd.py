@@ -1,24 +1,23 @@
+import io
 import os
 import pathlib
 
 import ppmd
 
 testdata_path = pathlib.Path(os.path.dirname(__file__)).joinpath('data')
-orders = [3, 4, 4, 5, 5, 6, 8, 16, 24, 32]
+data = b'This file is located in a folder.This file is located in the root.'
 
 
 def test_encoder(tmp_path):
-    with testdata_path.joinpath('ppmd.dat').open('rb') as f:
-        with tmp_path.joinpath('target.dat').open('wb') as t:
-            encoder = ppmd.Encoder(t, 6, 16)
-            # encoder.encode(f.read())
-            encoder.close()
+    with tmp_path.joinpath('target.dat').open('wb') as t:
+        with ppmd.Encoder(t, 6, 16) as encoder:
+            encoder.encode(data)
 
 
 def test_decoder():
     with testdata_path.joinpath('ppmd.dat').open('rb') as f:
-        decoder = ppmd.Decoder(f, 6, 16)
-        result = decoder.decode(41)
-        #assert result is not None
-        #assert len(result) == 41
-        decoder.close()
+        with ppmd.Decoder(f, 6, 16) as decoder:
+            result = decoder.decode(66)
+        assert result is not None
+        assert len(result) == 66
+        assert result == data
