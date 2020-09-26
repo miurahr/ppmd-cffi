@@ -12,12 +12,30 @@ def test_encoder(tmp_path):
     with tmp_path.joinpath('target.dat').open('wb') as t:
         with ppmd.Encoder(t, 6, 16) as encoder:
             encoder.encode(data)
+            encoder.flush()
+
+
+def test_encoder2(tmp_path):
+    with tmp_path.joinpath('target.dat').open('wb') as t:
+        with ppmd.Encoder(t, 6, 16) as encoder:
+            encoder.encode(data[:33])
+            encoder.encode(data[33:])
 
 
 def test_decoder():
     with testdata_path.joinpath('ppmd.dat').open('rb') as f:
         with ppmd.Decoder(f, 6, 16) as decoder:
             result = decoder.decode(66)
+        assert result is not None
+        assert len(result) == 66
+        assert result == data
+
+
+def test_decoder2():
+    with testdata_path.joinpath('ppmd.dat').open('rb') as f:
+        with ppmd.Decoder(f, 6, 16) as decoder:
+            result = decoder.decode(33)
+            result += decoder.decode(33)
         assert result is not None
         assert len(result) == 66
         assert result == data
