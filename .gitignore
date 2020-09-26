@@ -141,3 +141,5 @@ cython_debug/
 
 # IDEs
 .idea/
+
+tools/pytest_runner
