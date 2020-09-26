@@ -15,7 +15,7 @@ jobs:
       - name: Set up Python 🐍
         uses: actions/setup-python@v1
         with:
-          python-version: 3.8
+          python-version: 3.7
           architecture: x64
       - name: Install dependencies 🔧
         run: |
@@ -27,23 +27,22 @@ jobs:
           python-versions: 'cp36-cp36m cp37-cp37m cp38-cp38'
           package-path: ''
           pip-wheel-args: '--no-deps'
-      - name: Upload Artifacts 🚀
-        uses: actions/upload-artifact@v2
-        with:
-          name: wheels
-          path: wheelhouse/
       - name: "Run Tests"
         run: |
-          PYVERSIONS=("36" "38")
+          PYVERSIONS=("36" "37")
           for PYVERSION in "${PYVERSIONS[@]}"; do
-            for whl in wheelhouse/ppmd_cffi-*-cp${PYVERSION}-cp${PYVERSION}*-manylinux*.whl; do
+            for whl in wheelhouse/ppmd_cffi-*-cp${PYVERSION}-cp${PYVERSION}*-manylinux2014*.whl; do
               python -m tox -r -e py${PYVERSION} --installpkg "$whl"
             done
           done
+      - name: Gather manylinux2014 wheels
+        run: |
+          mkdir publish
+          cp wheelhouse/ppmd_cffi-*-manylinux2014*.whl publish/
       - name: Publish distribution 📦 to Test PyPI
         if: startsWith(github.event.ref, 'refs/heads/master')
         uses: pypa/gh-action-pypi-publish@master
         with:
           password: ${{ secrets.testpypi_password }}
           repository_url: https://test.pypi.org/legacy/
-          packages_dir: wheelhouse/
+          packages_dir: publish/
