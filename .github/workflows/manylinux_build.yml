@@ -35,7 +35,7 @@ jobs:
         run: |
           PYVERSIONS=("36" "37" "38")
           for PYVERSION in "${PYVERSIONS[@]}"; do
-            for whl in wheelhouse/ppmd-cffi-*-cp${PYVERSION}-cp${PYVERSION}*-manylinux*.whl; do
+            for whl in wheelhouse/ppmd_cffi-*-cp${PYVERSION}-cp${PYVERSION}*-manylinux*.whl; do
               python -m tox -r -e py${PYVERSION} --installpkg "$whl"
             done
           done
