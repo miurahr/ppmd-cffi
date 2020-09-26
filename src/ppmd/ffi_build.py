@@ -108,19 +108,8 @@ typedef struct
 
 # ------------- Decode ----------------
 ffibuilder.cdef(r'''
-typedef struct IPpmd7_RangeDec IPpmd7_RangeDec;
-
-struct IPpmd7_RangeDec
-{
-  UInt32 (*GetThreshold)(const IPpmd7_RangeDec *p, UInt32 total);
-  void (*Decode)(const IPpmd7_RangeDec *p, UInt32 start, UInt32 size);
-  UInt32 (*DecodeBit)(const IPpmd7_RangeDec *p, UInt32 size0);
-};
-''')
-ffibuilder.cdef(r'''
 typedef struct
 {
-  IPpmd7_RangeDec vt;
   UInt32 Range;
   UInt32 Code;
   IByteIn *Stream;
@@ -141,7 +130,7 @@ ffibuilder.cdef(r'''
 int ppmd_state_init(unsigned int maxOrder, unsigned int memSize, CPpmd7 *ppmd);
 int ppmd_decompress_init(FILE *file, CPpmd7z_RangeDec *rc);
 void ppmd_decompress_close(CPpmd7 *ppmd);
-int Ppmd7_DecodeSymbol(CPpmd7 *p, const IPpmd7_RangeDec *rc);
+int Ppmd7_DecodeSymbol(CPpmd7 *p, CPpmd7z_RangeDec *rc);
 ''')
 
 
@@ -197,32 +186,25 @@ static Byte Read(void *p)
     return c;
 }
 
-int ppmd_state_init(unsigned int maxOrder, unsigned int memSize, CPpmd7 *ppmd)
+void ppmd_state_init(unsigned int maxOrder, unsigned int memSize, CPpmd7 *ppmd)
 {
     Ppmd7_Alloc(ppmd, memSize, &allocator);
     Ppmd7_Construct(ppmd);
-    return (0);
 }
 
-int ppmd_decompress_init(FILE *file, CPpmd7z_RangeDec *rc)
+void ppmd_decompress_init(FILE *file, CPpmd7z_RangeDec *rc)
 {
     Bool res;
     struct CharReader reader = { Read, file, 0 };
     rc->Stream = (IByteIn *) &reader;
-    Ppmd7z_RangeDec_CreateVTable(rc);
-    res = Ppmd7z_RangeDec_Init(rc);
-    if (!res) {
-        return(-1);
-    } else {
-        return(0);
-    }
+    Ppmd7z_RangeDec_Init(rc);
 }
 
 int ppmd_decompress(Byte *outbuf, size_t outsize, CPpmd7 *ppmd, CPpmd7z_RangeDec *rc)
 {
     size_t i;
     for (i = 0; i < outsize; i++) {
-        int sym = Ppmd7_DecodeSymbol(ppmd, &(rc->vt));
+        int sym = Ppmd7_DecodeSymbol(ppmd, rc);
         if (sym < 0) {
             // eof
             break;

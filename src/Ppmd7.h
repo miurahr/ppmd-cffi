@@ -2,16 +2,14 @@
 2017-04-03 : Igor Pavlov : Public domain
 This code is based on PPMd var.H (2001): Dmitry Shkarin : Public domain */
 
-/* This code supports virtual RangeDecoder and includes the implementation
-of RangeCoder from 7z, instead of RangeCoder from original PPMd var.H.
-If you need the compatibility with original PPMd var.H, you can use external RangeDecoder */
+/* This code supports the implementation of RangeCoder from 7z,
+ * instead of RangeCoder from original PPMd var.H.
+ */
 
 #ifndef __PPMD7_H
 #define __PPMD7_H
 
 #include "Ppmd.h"
-
-EXTERN_C_BEGIN
 
 #define PPMD7_MIN_ORDER 2
 #define PPMD7_MAX_ORDER 64
@@ -97,18 +95,8 @@ CPpmd_See *Ppmd7_MakeEscFreq(CPpmd7 *p, unsigned numMasked, UInt32 *scale);
 
 /* ---------- Decode ---------- */
 
-typedef struct IPpmd7_RangeDec IPpmd7_RangeDec;
-
-struct IPpmd7_RangeDec
-{
-  UInt32 (*GetThreshold)(const IPpmd7_RangeDec *p, UInt32 total);
-  void (*Decode)(const IPpmd7_RangeDec *p, UInt32 start, UInt32 size);
-  UInt32 (*DecodeBit)(const IPpmd7_RangeDec *p, UInt32 size0);
-};
-
 typedef struct
 {
-  IPpmd7_RangeDec vt;
   UInt32 Range;
   UInt32 Code;
   IByteIn *Stream;
@@ -118,7 +106,7 @@ void Ppmd7z_RangeDec_CreateVTable(CPpmd7z_RangeDec *p);
 Bool Ppmd7z_RangeDec_Init(CPpmd7z_RangeDec *p);
 #define Ppmd7z_RangeDec_IsFinishedOK(p) ((p)->Code == 0)
 
-int Ppmd7_DecodeSymbol(CPpmd7 *p, const IPpmd7_RangeDec *rc);
+int Ppmd7_DecodeSymbol(CPpmd7 *p, CPpmd7z_RangeDec *rc);
 
 
 /* ---------- Encode ---------- */
@@ -137,6 +125,4 @@ void Ppmd7z_RangeEnc_FlushData(CPpmd7z_RangeEnc *p);
 
 void Ppmd7_EncodeSymbol(CPpmd7 *p, CPpmd7z_RangeEnc *rc, int symbol);
 
-EXTERN_C_END
- 
 #endif

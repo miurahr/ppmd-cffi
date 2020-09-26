@@ -42,7 +42,6 @@ class Decoder:
     def __init__(self, fileobj: BinaryIO, level: int, mem: int):
         self.ppmd = ffi.new('CPpmd7 *')
         self.rc = ffi.new('CPpmd7z_RangeDec *')
-        self.vt = self.rc.vt
         max_order = level
         mem_size = mem << 20
         lib.ppmd_state_init(max_order, mem_size, self.ppmd)
@@ -51,7 +50,7 @@ class Decoder:
     def decode(self, size):
         outbuf = bytearray()
         for i in range(size):
-            sym = lib.Ppmd7_DecodeSymbol(self.ppmd, ffi.addressof(self.vt))
+            sym = lib.Ppmd7_DecodeSymbol(self.ppmd, self.rc)
             if sym < 0:
                 break
             outbuf.append(sym)
