@@ -158,6 +158,11 @@ ffibuilder.set_source('_ppmd', r'''
 #include <stdio.h>
 #include <stdlib.h>
 
+#ifdef _WINDOWS
+#define getc_unlocked fgetc
+#define putc_unlocked fputc
+#endif
+
 static void *pmalloc(ISzAllocPtr ip, size_t size)
 {
     (void) ip;
