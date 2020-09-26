@@ -158,7 +158,7 @@ ffibuilder.set_source('_ppmd', r'''
 #include <stdio.h>
 #include <stdlib.h>
 
-#ifdef _WINDOWS
+#ifdef _WIN32
 #define getc_unlocked fgetc
 #define putc_unlocked fputc
 #endif
