@@ -15,11 +15,12 @@ jobs:
       - name: Set up Python 🐍
         uses: actions/setup-python@v1
         with:
-          python-version: 3.7
+          python-version: 3.8
+          architecture: x64
       - name: Install dependencies 🔧
         run: |
           python -m pip install --upgrade pip setuptools wheel
-          pip install twine tox
+          pip install twine tox tox-gh-actions
       - name: Build manylinux2014 Python wheels 🎡
         uses: RalfG/python-wheels-manylinux-build@v0.2.2-manylinux2014_x86_64
         with:
@@ -33,9 +34,16 @@ jobs:
           path: wheelhouse/
       - name: "Run Tests"
         run: |
-          PYVERSIONS=("36" "37" "38")
+          PYVERSIONS=("36" "38")
           for PYVERSION in "${PYVERSIONS[@]}"; do
             for whl in wheelhouse/ppmd_cffi-*-cp${PYVERSION}-cp${PYVERSION}*-manylinux*.whl; do
               python -m tox -r -e py${PYVERSION} --installpkg "$whl"
             done
           done
+      - name: Publish distribution 📦 to Test PyPI
+        if: startsWith(github.event.ref, 'refs/heads/master')
+        uses: pypa/gh-action-pypi-publish@master
+        with:
+          password: ${{ secrets.testpypi_password }}
+          repository_url: https://test.pypi.org/legacy/
+          packages_dir: wheelhouse/
