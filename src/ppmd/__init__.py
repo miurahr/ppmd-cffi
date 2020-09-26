@@ -17,24 +17,34 @@ except PackageNotFoundError:  # pragma: no-cover
 from _ppmd import ffi
 from _ppmd import lib
 
-global_weakkeydict = weakref.WeakKeyDictionary()
-
 
 class Encoder:
 
-    def __init__(self, level: int):
+    def __init__(self, fileobj: BinaryIO, level: int, mem: int):
         self.ppmd = ffi.new('CPpmd7 *')
-        self.rc = ffi.new('CPpmd7z_RangeDec *')
+        self.rc = ffi.new('CPpmd7z_RangeEnc *')
         max_order = level
-        mem_size = 16 << 20
-        res = lib.ppmd_state_init(max_order, mem_size, self.ppmd)
-        if res < 0:
-            raise ValueError
+        mem_size = mem << 20
+        lib.ppmd_state_init(self.ppmd, max_order, mem_size)
+        lib.ppmd_compress_init(self.rc, fileobj)
 
-    def encode(self, inbuf: bytes):
-        buf = ffi.from_buffer(inbuf)
-        res = ffi.buffer(buf)
-        return res
+    def encode(self, inbuf):
+        for sym in inbuf:
+            lib.Ppmd7_EncodeSymbol(self.ppmd, self.rc, sym)
+
+    def flush(self):
+        lib.Ppmd7_FlushData(self.rc)
+
+    def close(self):
+        lib.ppmd_state_close(self.ppmd)
+        ffi.release(self.ppmd)
+        ffi.release(self.rc)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self):
+        self.close()
 
 
 class Decoder:
@@ -44,8 +54,8 @@ class Decoder:
         self.rc = ffi.new('CPpmd7z_RangeDec *')
         max_order = level
         mem_size = mem << 20
-        lib.ppmd_state_init(max_order, mem_size, self.ppmd)
-        lib.ppmd_decompress_init(fileobj, self.rc)
+        lib.ppmd_state_init(self.ppmd, max_order, mem_size)
+        lib.ppmd_decompress_init(self.rc, fileobj)
 
     def decode(self, size):
         outbuf = bytearray()
@@ -59,7 +69,7 @@ class Decoder:
         return outbuf
 
     def close(self):
-        lib.ppmd_decompress_close(self.ppmd)
+        lib.ppmd_state_close(self.ppmd)
         ffi.release(self.ppmd)
         ffi.release(self.rc)
 

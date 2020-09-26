@@ -106,7 +106,7 @@ typedef struct
 } CPpmd7;
 ''')
 
-# ------------- Decode ----------------
+# ----------- API ---------------------
 ffibuilder.cdef(r'''
 typedef struct
 {
@@ -115,7 +115,6 @@ typedef struct
   IByteIn *Stream;
 } CPpmd7z_RangeDec;
 ''')
-# ------------- Encode ----------------
 ffibuilder.cdef(r'''
 typedef struct
 {
@@ -127,12 +126,19 @@ typedef struct
 } CPpmd7z_RangeEnc;
 ''')
 ffibuilder.cdef(r'''
-int ppmd_state_init(unsigned int maxOrder, unsigned int memSize, CPpmd7 *ppmd);
-int ppmd_decompress_init(FILE *file, CPpmd7z_RangeDec *rc);
-void ppmd_decompress_close(CPpmd7 *ppmd);
-int Ppmd7_DecodeSymbol(CPpmd7 *p, CPpmd7z_RangeDec *rc);
-''')
+void ppmd_state_init(CPpmd7 *ppmd, unsigned int maxOrder, unsigned int memSize);
+void ppmd_state_close(CPpmd7 *ppmd);
+void ppmd_decompress_init(CPpmd7z_RangeDec *rc, FILE *file);
+void ppmd_compress_init(CPpmd7z_RangeEnc *rc, FILE *file);
 
+void Ppmd7_Construct(CPpmd7 *p);
+void Ppmd7_Init(CPpmd7 *p, unsigned maxOrder);
+int Ppmd7_DecodeSymbol(CPpmd7 *p, CPpmd7z_RangeDec *rc);
+
+void Ppmd7z_RangeEnc_Init(CPpmd7z_RangeEnc *p);
+void Ppmd7z_RangeEnc_FlushData(CPpmd7z_RangeEnc *p);
+void Ppmd7_EncodeSymbol(CPpmd7 *p, CPpmd7z_RangeEnc *rc, int symbol);
+''')
 
 # -------------------------------------
 ffibuilder.set_source('_ppmd', r'''
@@ -186,40 +192,29 @@ static Byte Read(void *p)
     return c;
 }
 
-void ppmd_state_init(unsigned int maxOrder, unsigned int memSize, CPpmd7 *ppmd)
+void ppmd_state_init(CPpmd7 *p, unsigned int maxOrder, unsigned int memSize)
 {
-    Ppmd7_Alloc(ppmd, memSize, &allocator);
-    Ppmd7_Construct(ppmd);
+    Ppmd7_Alloc(p, memSize, &allocator);
+    Ppmd7_Construct(p);
 }
 
-void ppmd_decompress_init(FILE *file, CPpmd7z_RangeDec *rc)
+void ppmd_state_close(CPpmd7 *ppmd)
 {
-    Bool res;
+    Ppmd7_Free(ppmd, &allocator);
+}
+
+void ppmd_compress_init(CPpmd7z_RangeEnc *rc, FILE *file)
+{
+    struct CharWriter writer = { Write, file };
+    rc->Stream = (IByteOut *) &writer;
+    Ppmd7z_RangeEnc_Init(rc);
+}
+
+void ppmd_decompress_init(CPpmd7z_RangeDec *rc, FILE *file)
+{
     struct CharReader reader = { Read, file, 0 };
     rc->Stream = (IByteIn *) &reader;
     Ppmd7z_RangeDec_Init(rc);
-}
-
-int ppmd_decompress(Byte *outbuf, size_t outsize, CPpmd7 *ppmd, CPpmd7z_RangeDec *rc)
-{
-    size_t i;
-    for (i = 0; i < outsize; i++) {
-        int sym = Ppmd7_DecodeSymbol(ppmd, rc);
-        if (sym < 0) {
-            // eof
-            break;
-        }
-        outbuf[i] = (Byte)sym;
-    }
-    if (!Ppmd7z_RangeDec_IsFinishedOK(rc)) {
-        return -1;
-    }
-    return i;
-}
-
-void ppmd_decompress_close(CPpmd7 *ppmd)
-{
-    Ppmd7_Free(ppmd, &allocator);
 }
 ''', sources=sources, include_dirs=[SRC_ROOT])
 
