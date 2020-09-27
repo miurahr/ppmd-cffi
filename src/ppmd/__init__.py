@@ -12,8 +12,7 @@ except PackageNotFoundError:  # pragma: no-cover
     # package is not installed
     __version__ = "unknown"
 
-from _ppmd import ffi
-from _ppmd import lib
+from _ppmd import ffi, lib
 
 BUFFER_SIZE = 1048576
 
@@ -110,5 +109,5 @@ class Decoder:
     def __enter__(self):
         return self
 
-    def __exit__(self ,type, value, traceback):
+    def __exit__(self, type, value, traceback):
         self.close()
