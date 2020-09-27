@@ -1,9 +1,10 @@
-# modified and borrowed from https://github.com/domdfcoding/pynist
-name: Build manylinux Wheels
+name: publish manylinux wheels
 
 on:
   push:
-    branches: ["master"]
+    branches: ['master']
+  release:
+    types: [created]
 
 jobs:
   build:
@@ -12,37 +13,28 @@ jobs:
     steps:
       - name: Checkout 🛎️
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 20
+      - name: Fetch release tags
+        run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
       - name: Set up Python 🐍
         uses: actions/setup-python@v1
         with:
-          python-version: 3.7
-          architecture: x64
+          python-version: 3.8
       - name: Install dependencies 🔧
         run: |
           python -m pip install --upgrade pip setuptools wheel
-          pip install twine tox tox-gh-actions
+          pip install twine
       - name: Build manylinux2014 Python wheels 🎡
         uses: RalfG/python-wheels-manylinux-build@v0.2.2-manylinux2014_x86_64
         with:
           python-versions: 'cp36-cp36m cp37-cp37m cp38-cp38'
           package-path: ''
           pip-wheel-args: '--no-deps'
-      - name: "Run Tests"
-        run: |
-          PYVERSIONS=("36" "37")
-          for PYVERSION in "${PYVERSIONS[@]}"; do
-            for whl in wheelhouse/ppmd_cffi-*-cp${PYVERSION}-cp${PYVERSION}*-manylinux2014*.whl; do
-              python -m tox -r -e py${PYVERSION} --installpkg "$whl"
-            done
-          done
-      - name: Gather manylinux2014 wheels
-        run: |
-          mkdir publish
-          cp wheelhouse/ppmd_cffi-*-manylinux2014*.whl publish/
       - name: Publish distribution 📦 to Test PyPI
         if: startsWith(github.event.ref, 'refs/heads/master')
         uses: pypa/gh-action-pypi-publish@master
         with:
           password: ${{ secrets.testpypi_password }}
           repository_url: https://test.pypi.org/legacy/
-          packages_dir: publish/
+          packages_dir: dist/*-manylinux*.whl
