@@ -1,5 +1,3 @@
-import os
-from typing import BinaryIO, Union
 
 try:
     from importlib.metadata import PackageNotFoundError, version  # type: ignore

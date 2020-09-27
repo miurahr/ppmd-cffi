@@ -8,3 +8,6 @@ recursive-include src *.c
 recursive-include src *.h
 recursive-include tests *.py
 recursive-include tests *.bin
+recursive-include tests *.dat
+recursive-include tools *.cpp
+recursive-include tools *.sh
