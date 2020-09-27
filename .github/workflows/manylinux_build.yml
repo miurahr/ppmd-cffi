@@ -31,10 +31,14 @@ jobs:
           python-versions: 'cp36-cp36m cp37-cp37m cp38-cp38'
           package-path: ''
           pip-wheel-args: '--no-deps'
+      - name: Gather manylinux2014 wheels
+        run: |
+          mkdir -p publish
+          cp wheelhouse/ppmd_cffi-*-manylinux2014*.whl publish/
       - name: Publish distribution 📦 to Test PyPI
         if: startsWith(github.event.ref, 'refs/heads/master')
         uses: pypa/gh-action-pypi-publish@master
         with:
           password: ${{ secrets.testpypi_password }}
           repository_url: https://test.pypi.org/legacy/
-          packages_dir: dist/*-manylinux*.whl
+          packages_dir: publish/
