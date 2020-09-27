@@ -4,7 +4,7 @@ import sys
 
 
 def is_64bit() -> bool:
-    return sys.maxsize > 2**32
+    return sys.maxsize > 2 ** 32
 
 
 SOURCES = ['Ppmd7.c', 'Ppmd7Dec.c', 'Ppmd7Enc.c']
@@ -129,20 +129,25 @@ ffibuilder.cdef(r'''
 typedef struct {
     /* Inherits from IByteOut */
     void (*Write)(void *p, Byte b);
-    FILE *fp;
-} CharWriter;
+    char *buf;
+    int size;
+    int pos;
+} BufferWriter;
+
 typedef struct {
     /* Inherits from IByteIn */
     Byte (*Read)(void *p);
-    FILE *fp;
+    char *buf;
+    int size;
+    int pos;
     Bool eof;
-} CharReader;
+} BufferReader;
 ''')
 ffibuilder.cdef(r'''
 void ppmd_state_init(CPpmd7 *ppmd, unsigned int maxOrder, unsigned int memSize);
 void ppmd_state_close(CPpmd7 *ppmd);
-void ppmd_decompress_init(CPpmd7z_RangeDec *rc, CharReader *reader);
-void ppmd_compress_init(CPpmd7z_RangeEnc *rc, CharWriter *write);
+void ppmd_decompress_init(CPpmd7z_RangeDec *rc, BufferReader *reader);
+void ppmd_compress_init(CPpmd7z_RangeEnc *rc, BufferWriter *write);
 
 void Ppmd7_Construct(CPpmd7 *p);
 void Ppmd7_Init(CPpmd7 *p, unsigned maxOrder);
@@ -180,31 +185,36 @@ static ISzAlloc allocator = { pmalloc, pfree };
 typedef struct {
     /* Inherits from IByteOut */
     void (*Write)(void *p, Byte b);
-    FILE *fp;
-} CharWriter;
+    char *buf;
+    int size;
+    int pos;
+} BufferWriter;
+
 typedef struct {
     /* Inherits from IByteIn */
     Byte (*Read)(void *p);
-    FILE *fp;
-    Bool eof;
-} CharReader;
+    char *buf;
+    int size;
+    int pos;
+} BufferReader;
 
 static void Write(void *p, Byte b)
 {
-    CharWriter *cw = p;
-    putc_unlocked(b, cw->fp);
+    BufferWriter *bw = p;
+    if (bw->pos >= bw->size)
+        return;
+    bw->buf[bw->pos] = b;
+    bw->pos++;
 }
 
 static Byte Read(void *p)
 {
-    CharReader *cr = p;
-    if (cr->eof)
-	    return 0;
-    int c = getc_unlocked(cr->fp);
-    if (c == EOF) {
-	    cr->eof = 1;
+    BufferReader *br = p;
+	if (br->pos > br->size) {
 	    return 0;
     }
+	int c = br->buf[br->pos];
+	br->pos++;
     return c;
 }
 
@@ -220,21 +230,21 @@ void ppmd_state_close(CPpmd7 *ppmd)
     Ppmd7_Free(ppmd, &allocator);
 }
 
-void ppmd_compress_init(CPpmd7z_RangeEnc *rc, CharWriter *writer)
+void ppmd_compress_init(CPpmd7z_RangeEnc *rc, BufferWriter *writer)
 {
     writer->Write = Write;
     rc->Stream = (IByteOut *) writer;
     Ppmd7z_RangeEnc_Init(rc);
 }
 
-void ppmd_decompress_init(CPpmd7z_RangeDec *rc, CharReader *reader)
+int ppmd_decompress_init(CPpmd7z_RangeDec *rc, BufferReader *reader)
 {
     reader->Read = Read;
     rc->Stream = (IByteIn *) reader;
-    Ppmd7z_RangeDec_Init(rc);
+    Bool res = Ppmd7z_RangeDec_Init(rc);
+    return res;
 }
 ''', sources=sources, include_dirs=[SRC_ROOT])
 
-
-if __name__ == "__main__":    # not when running with setuptools
+if __name__ == "__main__":  # not when running with setuptools
     ffibuilder.compile(verbose=True)

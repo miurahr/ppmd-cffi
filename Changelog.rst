@@ -25,6 +25,12 @@ Removed
 Security
 --------
 
+`v0.0.3`_
+=========
+
+* Change API to buffer protocol.
+
+
 `v0.0.2`_
 =========
 
@@ -37,5 +43,6 @@ v0.0.1
 
 
 .. History links
-.. _Unreleased: https://github.com/miurahr/py7zr/compare/v0.0.2...HEAD
+.. _Unreleased: https://github.com/miurahr/py7zr/compare/v0.0.3...HEAD
+.. _v0.0.3: https://github.com/miurahr/py7zr/compare/v0.0.2...v0.0.3
 .. _v0.0.2: https://github.com/miurahr/py7zr/compare/v0.0.1...v0.0.2
