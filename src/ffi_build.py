@@ -7,9 +7,8 @@ def is_64bit() -> bool:
     return sys.maxsize > 2 ** 32
 
 
-SOURCES = ['Ppmd7.c', 'Ppmd7Dec.c', 'Ppmd7Enc.c']
-SRC_ROOT = pathlib.Path(__file__).parent.parent
-sources = [SRC_ROOT.joinpath(s).as_posix() for s in SOURCES]
+src_root = pathlib.Path(__file__).parent.joinpath('ext')
+sources = [src_root.joinpath(s).as_posix() for s in ['Ppmd7.c', 'Ppmd7Dec.c', 'Ppmd7Enc.c']]
 
 ffibuilder = cffi.FFI()
 
@@ -243,7 +242,7 @@ int ppmd_decompress_init(CPpmd7z_RangeDec *rc, BufferReader *reader)
     Bool res = Ppmd7z_RangeDec_Init(rc);
     return res;
 }
-''', sources=sources, include_dirs=[SRC_ROOT])
+''', sources=sources, include_dirs=[src_root])
 
 if __name__ == "__main__":  # not when running with setuptools
     ffibuilder.compile(verbose=True)
