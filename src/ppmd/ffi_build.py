@@ -140,7 +140,6 @@ typedef struct {
     char *buf;
     int size;
     int pos;
-    Bool eof;
 } BufferReader;
 ''')
 ffibuilder.cdef(r'''
