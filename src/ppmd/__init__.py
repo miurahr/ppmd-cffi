@@ -48,7 +48,7 @@ class PpmdBuffer(io.BufferedIOBase):
 
     def read(self, size: Optional[int] = -1):
         if size is None or size < 0:
-            length:int = len(self._buf)
+            length: int = len(self._buf)
         else:
             length = size
         result = self._buf[:length]
