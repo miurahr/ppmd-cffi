@@ -1,3 +1,4 @@
+from typing import BinaryIO
 
 try:
     from importlib.metadata import PackageNotFoundError, version  # type: ignore
@@ -17,7 +18,7 @@ from _ppmd import ffi, lib
 BUFFER_SIZE = 1048576
 
 
-class Encoder:
+class PpmdEncoder:
 
     def __init__(self, level: int, mem: int):
         self.closed = False
@@ -66,32 +67,22 @@ class Encoder:
         self.close()
 
 
-class Decoder:
+class PpmdDecoder:
 
-    def __init__(self, level: int, mem: int):
+    def __init__(self, source: BinaryIO, level: int, mem: int):
+        if not source.readable:
+            raise ValueError
+        self.source = source
         self.ppmd = ffi.new('CPpmd7 *')
         self.rc = ffi.new('CPpmd7z_RangeDec *')
         self.reader = ffi.new('BufferReader *')
+        self._userdata = ffi.new_handle(self)
         self.max_order = level
         self.mem_size = mem << 20
-        self.need_init = True
-
-    def _ppmd_init(self):
         lib.ppmd_state_init(self.ppmd, self.max_order, self.mem_size)
-        lib.ppmd_decompress_init(self.rc, self.reader)
+        lib.ppmd_decompress_init(self.rc, self.reader, lib.src_readinto, self._userdata)
 
-    def decode(self, inbuf, length):
-        if self.need_init:
-            self.reader.buf = ffi.from_buffer(inbuf)
-            self.reader.size = len(inbuf)
-            self.reader.pos = 0
-            self._ppmd_init()
-            self.need_init = False
-        else:
-            new_buf = bytes(ffi.buffer(self.reader.buf)[self.reader.pos:]) + inbuf
-            self.reader.buf = ffi.from_buffer(new_buf)
-            self.reader.size = len(new_buf)
-            self.reader.pos = 0
+    def decode(self, length):
         outbuf = bytearray()
         for _ in range(length):
             sym = lib.Ppmd7_DecodeSymbol(self.ppmd, self.rc)
@@ -111,3 +102,11 @@ class Decoder:
 
     def __exit__(self, type, value, traceback):
         self.close()
+
+
+@ffi.def_extern()
+def src_readinto(b: bytes, size: int, userdata: object) -> int:
+    decoder = ffi.from_handle(userdata)
+    buf = ffi.buffer(b, size)
+    result = decoder.source.readinto(buf)
+    return result

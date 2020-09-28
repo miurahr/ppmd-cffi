@@ -12,6 +12,7 @@ sources = [src_root.joinpath(s).as_posix() for s in ['Ppmd7.c', 'Ppmd7Dec.c', 'P
 
 ffibuilder = cffi.FFI()
 
+# ----------- PPMd interfaces ---------------------
 # 7zTypes.h
 ffibuilder.cdef(r'''
 typedef unsigned char Byte;
@@ -22,8 +23,6 @@ typedef unsigned int UInt32;
 typedef long long Int64;
 typedef unsigned long long UInt64;
 typedef int Bool;
-''')
-ffibuilder.cdef(r'''
 typedef struct IByteIn IByteIn;
 struct IByteIn
 {
@@ -46,8 +45,6 @@ typedef struct
   Byte Count;
   ...;
 } CPpmd_See;
-''')
-ffibuilder.cdef(r'''
 typedef struct
 {
   Byte Symbol;
@@ -105,7 +102,6 @@ typedef struct
 } CPpmd7;
 ''')
 
-# ----------- API ---------------------
 ffibuilder.cdef(r'''
 typedef struct
 {
@@ -113,8 +109,6 @@ typedef struct
   UInt32 Code;
   IByteIn *Stream;
 } CPpmd7z_RangeDec;
-''')
-ffibuilder.cdef(r'''
 typedef struct
 {
   UInt64 Low;
@@ -124,10 +118,15 @@ typedef struct
   IByteOut *Stream;
 } CPpmd7z_RangeEnc;
 ''')
+
+# ----------- python binding API ---------------------
+# ppmdpy.h
 ffibuilder.cdef(r'''
+
 typedef struct {
     /* Inherits from IByteOut */
     void (*Write)(void *p, Byte b);
+    int (*dst_write)(char *buf, int size);
     char *buf;
     int size;
     int pos;
@@ -136,15 +135,15 @@ typedef struct {
 typedef struct {
     /* Inherits from IByteIn */
     Byte (*Read)(void *p);
-    char *buf;
-    int size;
-    int pos;
+    int (*src_readinto)(char *buf, int size, void *userdata);
+    void *userdata;
 } BufferReader;
-''')
-ffibuilder.cdef(r'''
+
+extern "Python" int src_readinto(char *, int, void *);
+
 void ppmd_state_init(CPpmd7 *ppmd, unsigned int maxOrder, unsigned int memSize);
 void ppmd_state_close(CPpmd7 *ppmd);
-void ppmd_decompress_init(CPpmd7z_RangeDec *rc, BufferReader *reader);
+int ppmd_decompress_init(CPpmd7z_RangeDec *rc, BufferReader *reader, int (*src_readingo)(char *, int, void*), void *userdata);
 void ppmd_compress_init(CPpmd7z_RangeEnc *rc, BufferWriter *write);
 
 void Ppmd7_Construct(CPpmd7 *p);
@@ -155,46 +154,10 @@ void Ppmd7z_RangeEnc_Init(CPpmd7z_RangeEnc *p);
 void Ppmd7z_RangeEnc_FlushData(CPpmd7z_RangeEnc *p);
 void Ppmd7_EncodeSymbol(CPpmd7 *p, CPpmd7z_RangeEnc *rc, int symbol);
 ''')
-# -------------------------------------
+
+# ---------------------------------------------------------------------------
 ffibuilder.set_source('_ppmd', r'''
-#include "Ppmd7.h"
-#include <stdio.h>
-#include <stdlib.h>
-
-#ifdef _WIN32
-#define getc_unlocked fgetc
-#define putc_unlocked fputc
-#endif
-
-static void *pmalloc(ISzAllocPtr ip, size_t size)
-{
-    (void) ip;
-    return malloc(size);
-}
-
-static void pfree(ISzAllocPtr ip, void *addr)
-{
-    (void) ip;
-    free(addr);
-}
-
-static ISzAlloc allocator = { pmalloc, pfree };
-
-typedef struct {
-    /* Inherits from IByteOut */
-    void (*Write)(void *p, Byte b);
-    char *buf;
-    int size;
-    int pos;
-} BufferWriter;
-
-typedef struct {
-    /* Inherits from IByteIn */
-    Byte (*Read)(void *p);
-    char *buf;
-    int size;
-    int pos;
-} BufferReader;
+#include "PpmdPy.h"
 
 static void Write(void *p, Byte b)
 {
@@ -208,12 +171,11 @@ static void Write(void *p, Byte b)
 static Byte Read(void *p)
 {
     BufferReader *br = p;
-	if (br->pos > br->size) {
-	    return 0;
-    }
-	int c = br->buf[br->pos];
-	br->pos++;
-    return c;
+    char b;
+    int size = br->src_readinto(&b, 1, br->userdata);
+    if (size <= 0)
+        return 0;
+	return (Byte) b;
 }
 
 void ppmd_state_init(CPpmd7 *p, unsigned int maxOrder, unsigned int memSize)
@@ -235,9 +197,12 @@ void ppmd_compress_init(CPpmd7z_RangeEnc *rc, BufferWriter *writer)
     Ppmd7z_RangeEnc_Init(rc);
 }
 
-int ppmd_decompress_init(CPpmd7z_RangeDec *rc, BufferReader *reader)
+int ppmd_decompress_init(CPpmd7z_RangeDec *rc, BufferReader *reader,
+                         int (*src_readinto)(char*, int, void*), void *userdata)
 {
     reader->Read = Read;
+    reader->src_readinto = src_readinto;
+    reader->userdata = userdata;
     rc->Stream = (IByteIn *) reader;
     Bool res = Ppmd7z_RangeDec_Init(rc);
     return res;

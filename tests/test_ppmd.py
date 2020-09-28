@@ -8,7 +8,7 @@ data = b'This file is located in a folder.This file is located in the root.'
 
 
 def test_encoder():
-    with ppmd.Encoder(6, 16) as encoder:
+    with ppmd.PpmdEncoder(6, 16) as encoder:
         result = encoder.encode(data)
         result += encoder.flush()
     assert len(result) == 41
@@ -17,7 +17,7 @@ def test_encoder():
 
 
 def test_encoder2():
-    with ppmd.Encoder(6, 16) as encoder:
+    with ppmd.PpmdEncoder(6, 16) as encoder:
         result = encoder.encode(data[:33])
         result += encoder.encode(data[33:])
         result += encoder.flush()
@@ -28,8 +28,6 @@ def test_encoder2():
 
 def test_decoder():
     with testdata_path.joinpath('ppmd.dat').open('rb') as f:
-        with ppmd.Decoder(6, 16) as decoder:
-            result = decoder.decode(f.read(), 66)
-        assert result is not None
-        assert len(result) == 66
-        assert result == data
+        with ppmd.PpmdDecoder(f, 6, 16) as decoder:
+            result = decoder.decode(66)
+            assert result == data
