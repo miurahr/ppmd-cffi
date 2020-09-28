@@ -25,6 +25,21 @@ Removed
 Security
 --------
 
+`v0.1.0`_
+=========
+
+Added
+-----
+
+* Add documennts.
+
+Changed
+-------
+
+* API change
+    - Base API: PpmdEncoder PpmdDecoder class
+    - Simple API: PpmdBufferEncoder, PpmdBufferDecoder class
+
 `v0.0.5`_
 =========
 
