@@ -1,14 +1,15 @@
-import cffi
 import pathlib
 import sys
+
+import cffi  # type: ignore  # noqa
+
+src_root = pathlib.Path(__file__).parent.joinpath('ext')
+sources = [src_root.joinpath(s).as_posix() for s in ['Ppmd7.c', 'Ppmd7Dec.c', 'Ppmd7Enc.c']]
 
 
 def is_64bit() -> bool:
     return sys.maxsize > 2 ** 32
 
-
-src_root = pathlib.Path(__file__).parent.joinpath('ext')
-sources = [src_root.joinpath(s).as_posix() for s in ['Ppmd7.c', 'Ppmd7Dec.c', 'Ppmd7Enc.c']]
 
 ffibuilder = cffi.FFI()
 
@@ -126,25 +127,24 @@ ffibuilder.cdef(r'''
 typedef struct {
     /* Inherits from IByteOut */
     void (*Write)(void *p, Byte b);
-    int (*dst_write)(char *buf, int size);
-    char *buf;
-    int size;
-    int pos;
-} BufferWriter;
+    void (*dst_write)(char *buf, int size, void *userdata);
+    void *userdata;
+} RawWriter;
 
 typedef struct {
     /* Inherits from IByteIn */
     Byte (*Read)(void *p);
     int (*src_readinto)(char *buf, int size, void *userdata);
     void *userdata;
-} BufferReader;
+} RawReader;
 
 extern "Python" int src_readinto(char *, int, void *);
+extern "Python" void dst_write(char *, int, void *);
 
 void ppmd_state_init(CPpmd7 *ppmd, unsigned int maxOrder, unsigned int memSize);
 void ppmd_state_close(CPpmd7 *ppmd);
-int ppmd_decompress_init(CPpmd7z_RangeDec *rc, BufferReader *reader, int (*src_readingo)(char *, int, void*), void *userdata);
-void ppmd_compress_init(CPpmd7z_RangeEnc *rc, BufferWriter *write);
+int ppmd_decompress_init(CPpmd7z_RangeDec *rc, RawReader *reader, int (*src_readingo)(char *, int, void*), void *userdata);
+void ppmd_compress_init(CPpmd7z_RangeEnc *rc, RawWriter *write, void (*dst_write)(char *, int, void*), void *userdata);
 
 void Ppmd7_Construct(CPpmd7 *p);
 void Ppmd7_Init(CPpmd7 *p, unsigned maxOrder);
@@ -161,16 +161,13 @@ ffibuilder.set_source('_ppmd', r'''
 
 static void Write(void *p, Byte b)
 {
-    BufferWriter *bw = p;
-    if (bw->pos >= bw->size)
-        return;
-    bw->buf[bw->pos] = b;
-    bw->pos++;
+    RawWriter *bw = p;
+    bw->dst_write(&b, 1, bw->userdata);
 }
 
 static Byte Read(void *p)
 {
-    BufferReader *br = p;
+    RawReader *br = p;
     char b;
     int size = br->src_readinto(&b, 1, br->userdata);
     if (size <= 0)
@@ -190,14 +187,17 @@ void ppmd_state_close(CPpmd7 *ppmd)
     Ppmd7_Free(ppmd, &allocator);
 }
 
-void ppmd_compress_init(CPpmd7z_RangeEnc *rc, BufferWriter *writer)
+void ppmd_compress_init(CPpmd7z_RangeEnc *rc, RawWriter *writer,
+                        void (*dst_write)(char*, int, void*), void *userdata)
 {
     writer->Write = Write;
+    writer->dst_write = dst_write;
+    writer->userdata = userdata;
     rc->Stream = (IByteOut *) writer;
     Ppmd7z_RangeEnc_Init(rc);
 }
 
-int ppmd_decompress_init(CPpmd7z_RangeDec *rc, BufferReader *reader,
+int ppmd_decompress_init(CPpmd7z_RangeDec *rc, RawReader *reader,
                          int (*src_readinto)(char*, int, void*), void *userdata)
 {
     reader->Read = Read;
