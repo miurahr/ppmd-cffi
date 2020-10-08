@@ -36,7 +36,7 @@ jobs:
           mkdir -p publish
           cp wheelhouse/ppmd_cffi-*-manylinux2014*.whl publish/
       - name: Publish distribution 📦 to Test PyPI
-        if: startsWith(github.event.ref, 'refs/heads/master')
+        if: startsWith(github.event.ref, 'refs/heads/main')
         uses: pypa/gh-action-pypi-publish@master
         with:
           password: ${{ secrets.testpypi_password }}
