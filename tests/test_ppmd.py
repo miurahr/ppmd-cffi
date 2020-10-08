@@ -10,7 +10,7 @@ data = b'This file is located in a folder.This file is located in the root.'
 
 def test_ppmd_encoder():
     with io.BytesIO() as dst:
-        with ppmd.PpmdEncoder(dst, 6, 16) as encoder:
+        with ppmd.PpmdEncoder(dst, 6, 16 << 20) as encoder:
             encoder.encode(data)
             encoder.flush()
         result = dst.getvalue()
@@ -21,7 +21,7 @@ def test_ppmd_encoder():
 
 def test_ppmd_encoder2():
     with io.BytesIO() as dst:
-        with ppmd.PpmdEncoder(dst, 6, 16) as encoder:
+        with ppmd.PpmdEncoder(dst, 6, 16 << 20) as encoder:
             encoder.encode(data[:33])
             encoder.encode(data[33:])
             encoder.flush()
@@ -32,7 +32,7 @@ def test_ppmd_encoder2():
 
 
 def test_ppmd_buffer_encoder():
-    with ppmd.PpmdBufferEncoder(6, 16) as encoder:
+    with ppmd.PpmdBufferEncoder(6, 16 << 20) as encoder:
         result = encoder.encode(data[:33])
         result += encoder.encode(data[33:])
         result += encoder.flush()
@@ -43,7 +43,7 @@ def test_ppmd_buffer_encoder():
 
 def test_ppmd_decoder():
     with testdata_path.joinpath('ppmd.dat').open('rb') as f:
-        with ppmd.PpmdDecoder(f, 6, 16) as decoder:
+        with ppmd.PpmdDecoder(f, 6, 16 << 20) as decoder:
             result = decoder.decode(33)
             result += decoder.decode(33)
             assert result == data
@@ -51,6 +51,6 @@ def test_ppmd_decoder():
 
 def test_ppmd_buffer_decoder():
     with testdata_path.joinpath('ppmd.dat').open('rb') as f:
-        with ppmd.PpmdBufferDecoder(6, 16) as decoder:
+        with ppmd.PpmdBufferDecoder(6, 16 << 20) as decoder:
             result = decoder.decode(f.read(), 66)
     assert result == data

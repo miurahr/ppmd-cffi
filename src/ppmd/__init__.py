@@ -64,7 +64,7 @@ class PpmdBuffer(io.BufferedIOBase):
 
 class PpmdEncoder:
 
-    def __init__(self, destination: Union[BinaryIO, PpmdBuffer], level: int, mem: int):
+    def __init__(self, destination: Union[BinaryIO, PpmdBuffer], max_order: int, mem_size: int):
         self.closed = False
         self.flushed = False
         self.destination = destination
@@ -72,8 +72,6 @@ class PpmdEncoder:
         self.rc = ffi.new('CPpmd7z_RangeEnc *')
         self.writer = ffi.new('RawWriter *')
         self._userdata = ffi.new_handle(self)
-        max_order = level
-        mem_size = mem << 20
         lib.ppmd_state_init(self.ppmd, max_order, mem_size)
         lib.ppmd_compress_init(self.rc, self.writer, lib.dst_write, self._userdata)
 
@@ -136,15 +134,15 @@ class PpmdBufferEncoder(PpmdEncoder):
 
 class PpmdDecoder:
 
-    def __init__(self, source: Union[BinaryIO, PpmdBuffer], level: int, mem: int):
+    def __init__(self, source: Union[BinaryIO, PpmdBuffer], max_order: int, mem_size: int):
         if not source.readable:
             raise ValueError
         self.source = source
         self.ppmd = ffi.new('CPpmd7 *')
         self.rc = ffi.new('CPpmd7z_RangeDec *')
         self.reader = ffi.new('RawReader *')
-        self.max_order = level
-        self.mem_size = mem << 20
+        self.max_order = max_order  # type: int
+        self.mem_size = mem_size  # type: int
         self.initialized = False
         self.closed = False
 
@@ -188,10 +186,9 @@ class PpmdBufferDecoder(PpmdDecoder):
         super(PpmdBufferDecoder, self).__init__(self.buf, level, mem)
         self.closed = False
 
-    def decode(self, data, size):
+    def decode(self, data: bytes, size: int) -> bytes:
         self.buf.write(data)
-        result = super(PpmdBufferDecoder, self).decode(size)
-        return result
+        return super(PpmdBufferDecoder, self).decode(size)
 
     def close(self):
         super(PpmdBufferDecoder, self).close()
