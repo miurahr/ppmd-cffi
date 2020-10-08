@@ -1,4 +1,4 @@
-.. ppmd-cffi documentation master file, created by
+.. ppmd-cffi documentation main index file, created by
    sphinx-quickstart on Mon Sep 28 14:52:30 2020.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.

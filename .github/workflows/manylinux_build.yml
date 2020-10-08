@@ -2,7 +2,7 @@ name: publish manylinux wheels
 
 on:
   push:
-    branches: ['master']
+    branches: ['main']
   release:
     types: [created]
 

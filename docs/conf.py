@@ -64,7 +64,7 @@ html_theme_options = {
     'github_user': 'miurahr',
     'github_repo': 'ppmd',
     'page_width': 'auto',
-    'badge_branch': 'master',
+    'badge_branch': 'main',
     'donate_url': 'https://liberapay.com/miurahr',
 }
 html_title = 'PPMd compression library'

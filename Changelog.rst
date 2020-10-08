@@ -32,6 +32,7 @@ Changed
 -------
 
 * Change mem parameter in MB to mem_size in bytes.
+* Change default branch name to main.
 
 `v0.1.0`_
 =========
