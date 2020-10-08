@@ -25,7 +25,7 @@ Removed
 Security
 --------
 
-`v0.2.1`_
+`v0.2.2`_
 =========
 
 * Release manylinux binary on PyPI.
@@ -82,7 +82,7 @@ v0.0.1
 
 
 .. History links
-.. _Unreleased: https://github.com/miurahr/py7zr/compare/v0.2.1...HEAD
-.. _v0.2.1: https://github.com/miurahr/py7zr/compare/v0.2.0...v0.2.1
+.. _Unreleased: https://github.com/miurahr/py7zr/compare/v0.2.2...HEAD
+.. _v0.2.2: https://github.com/miurahr/py7zr/compare/v0.2.0...v0.2.2
 .. _v0.2.0: https://github.com/miurahr/py7zr/compare/v0.1.0...v0.2.0
 .. _v0.1.0: https://github.com/miurahr/py7zr/compare/v0.0.1...v0.1.0
