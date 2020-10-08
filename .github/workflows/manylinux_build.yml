@@ -2,9 +2,11 @@ name: publish manylinux wheels
 
 on:
   push:
-    branches: ['main']
-  release:
-    types: [created]
+    branches:
+      - main
+      - releases/*
+    tags:
+      - v*
 
 jobs:
   build:
