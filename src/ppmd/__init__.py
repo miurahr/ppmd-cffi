@@ -16,6 +16,12 @@ except PackageNotFoundError:  # pragma: no-cover
 
 from _ppmd import ffi, lib  # type: ignore  # noqa
 
+_PPMD7_MIN_ORDER = 2
+_PPMD7_MAX_ORDER = 64
+
+_PPMD7_MIN_MEM_SIZE = 1 << 11
+_PPMD7_MAX_MEM_SIZE = 0xFFFFFFFF - 12 * 3
+
 
 @ffi.def_extern()
 def dst_write(b: bytes, size: int, userdata: object) -> None:
@@ -72,8 +78,11 @@ class PpmdEncoder:
         self.rc = ffi.new('CPpmd7z_RangeEnc *')
         self.writer = ffi.new('RawWriter *')
         self._userdata = ffi.new_handle(self)
-        lib.ppmd_state_init(self.ppmd, max_order, mem_size)
-        lib.ppmd_compress_init(self.rc, self.writer, lib.dst_write, self._userdata)
+        if _PPMD7_MIN_ORDER <= max_order <= _PPMD7_MAX_ORDER and _PPMD7_MIN_MEM_SIZE <= mem_size <= _PPMD7_MAX_MEM_SIZE:
+            lib.ppmd_state_init(self.ppmd, max_order, mem_size)
+            lib.ppmd_compress_init(self.rc, self.writer, lib.dst_write, self._userdata)
+        else:
+            raise ValueError("PPMd wrong parameters.")
 
     def encode(self, inbuf):
         for sym in inbuf:
