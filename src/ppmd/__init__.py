@@ -1,8 +1,10 @@
+import array
 import io
+import mmap
 from typing import BinaryIO, Optional, Union
 
 try:
-    from importlib.metadata import PackageNotFoundError, version  # type: ignore
+    from importlib.metadata import PackageNotFoundError, version
 except ImportError:
     from importlib_metadata import PackageNotFoundError, version  # type: ignore
 
@@ -46,7 +48,7 @@ class PpmdBuffer(io.BufferedIOBase):
     def writable(self):
         return True
 
-    def write(self, b: Union[bytes, bytearray, memoryview]):
+    def write(self, b: Union[bytes, bytearray, memoryview, array.array, mmap.mmap]):
         self._buf += b
 
     def readable(self):
@@ -67,6 +69,13 @@ class PpmdBuffer(io.BufferedIOBase):
         self._buf[:] = self._buf[length:]
         return length
 
+    def tell(self):
+        return 0
+
+    @property
+    def size(self):
+        return len(self._buf)
+
 
 class PpmdEncoder:
 
@@ -84,7 +93,7 @@ class PpmdEncoder:
         else:
             raise ValueError("PPMd wrong parameters.")
 
-    def encode(self, inbuf):
+    def encode(self, inbuf) -> None:
         for sym in inbuf:
             lib.Ppmd7_EncodeSymbol(self.ppmd, self.rc, sym)
 
@@ -112,33 +121,41 @@ class PpmdEncoder:
         self.close()
 
 
-class PpmdBufferEncoder(PpmdEncoder):
+class PpmdBufferEncoder:
 
     def __init__(self, level: int, mem: int):
         self.buf = PpmdBuffer()
-        super(PpmdBufferEncoder, self).__init__(self.buf, level, mem)
+        self._encoder = PpmdEncoder(self.buf, level, mem)
         self.closed = False
         self.flushed = False
 
-    def encode(self, data):
-        super(PpmdBufferEncoder, self).encode(data)
+    def encode(self, data: Union[bytes, bytearray, memoryview]) -> bytes:
+        self._encoder.encode(data)
         result = self.buf.read()
         return result
 
-    def flush(self):
+    def flush(self) -> bytes:
         if self.flushed:
             return b''
-        super(PpmdBufferEncoder, self).flush()
+        self._encoder.flush()
         result = self.buf.read()
         self.flushed = True
         return result
 
-    def close(self):
+    def close(self) -> None:
         if self.closed:
             return
-        super(PpmdBufferEncoder, self).close()
+        self._encoder.close()
         del self.buf
         self.closed = True
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        if not self.flushed:
+            self.flush()
+        self.close()
 
 
 class PpmdDecoder:
@@ -184,23 +201,29 @@ class PpmdDecoder:
     def __enter__(self):
         return self
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, types, value, traceback):
         self.close()
 
 
-class PpmdBufferDecoder(PpmdDecoder):
+class PpmdBufferDecoder:
 
     def __init__(self, level: int, mem: int):
         self.buf = PpmdBuffer()
-        super(PpmdBufferDecoder, self).__init__(self.buf, level, mem)
+        self._decoder = PpmdDecoder(self.buf, level, mem)
         self.closed = False
 
     def decode(self, data: bytes, size: int) -> bytes:
-        self.buf.write(data)
-        return super(PpmdBufferDecoder, self).decode(size)
+        if len(data) > 0:
+            self.buf.write(data)
+            result = bytearray()
+            while self.buf.size > 0 and len(result) < size:
+                result += self._decoder.decode(1)
+            return bytes(result)
+        else:
+            return self._decoder.decode(size)
 
     def close(self):
-        super(PpmdBufferDecoder, self).close()
+        self._decoder.close()
         if self.closed:
             return
         del self.buf
@@ -209,5 +232,5 @@ class PpmdBufferDecoder(PpmdDecoder):
     def __enter__(self):
         return self
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, types, value, traceback):
         self.close()
