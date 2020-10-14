@@ -1,4 +1,4 @@
-name: Publish Python 🐍 wheel distributions 📦 to PyPI and TestPyPI
+name: Publish Python 🐍 wheel distributions 📦 to PyPI and TestPyPI(mac/win)
 
 on:
   push:
@@ -31,7 +31,7 @@ jobs:
       run: python -m pep517.build --binary --out-dir dist/ ./
     - name: Publish distribution 📦 to Test PyPI
       if: startsWith(github.event.ref, 'refs/heads/main')
-      run: twine upload dist/*.whl
+      run: python -m twine upload dist/*.whl
       env:
         TWINE_USERNAME: miurahr
         TWINE_PASSWORD: ${{ secrets.testpypi_password }}
@@ -39,7 +39,7 @@ jobs:
         TWINE_NON_INTERACTIVE: 1
     - name: Publish distribution 📦 to PyPI
       if: startsWith(github.event.ref, 'refs/tags')
-      run: twine upload dist/*.whl
+      run: python -m twine upload dist/*.whl
       env:
         TWINE_USERNAME: miurahr
         TWINE_PASSWORD: ${{ secrets.pypi_password }}
