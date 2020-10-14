@@ -25,6 +25,12 @@ Removed
 Security
 --------
 
+`v0.2.3`_
+=========
+
+* Fix decompression algorithm.
+* Release win/mac binaries.
+
 `v0.2.2`_
 =========
 
@@ -82,7 +88,8 @@ v0.0.1
 
 
 .. History links
-.. _Unreleased: https://github.com/miurahr/py7zr/compare/v0.2.2...HEAD
+.. _Unreleased: https://github.com/miurahr/py7zr/compare/v0.2.3...HEAD
+.. _v0.2.2: https://github.com/miurahr/py7zr/compare/v0.2.2...v0.2.3
 .. _v0.2.2: https://github.com/miurahr/py7zr/compare/v0.2.0...v0.2.2
 .. _v0.2.0: https://github.com/miurahr/py7zr/compare/v0.1.0...v0.2.0
 .. _v0.1.0: https://github.com/miurahr/py7zr/compare/v0.0.1...v0.1.0
