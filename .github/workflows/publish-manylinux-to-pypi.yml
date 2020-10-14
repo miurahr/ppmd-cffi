@@ -1,4 +1,4 @@
-name: publish manylinux wheels
+name: publish manylinux wheels to PyPI
 
 on:
   push:
