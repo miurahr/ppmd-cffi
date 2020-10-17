@@ -35,7 +35,7 @@ jobs:
       - name: Gather manylinux2014 wheels
         run: |
           mkdir -p publish
-          cp dist/ppmd_cffi-*-manylinux*.whl publish/
+          cp ppmd_cffi-*-manylinux*.whl publish/
       - name: Publish distribution 📦 to Test PyPI
         if: startsWith(github.event.ref, 'refs/heads/main')
         uses: pypa/gh-action-pypi-publish@master
