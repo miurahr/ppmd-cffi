@@ -25,6 +25,12 @@ Removed
 Security
 --------
 
+`v0.2.4`_
+=========
+
+* Publish i686 and aarch64 manylinux2014 binary packages.
+* Support python 3.9
+
 `v0.2.3`_
 =========
 
@@ -88,8 +94,9 @@ v0.0.1
 
 
 .. History links
-.. _Unreleased: https://github.com/miurahr/py7zr/compare/v0.2.3...HEAD
-.. _v0.2.2: https://github.com/miurahr/py7zr/compare/v0.2.2...v0.2.3
+.. _Unreleased: https://github.com/miurahr/py7zr/compare/v0.2.4...HEAD
+.. _v0.2.4: https://github.com/miurahr/py7zr/compare/v0.2.3...v0.2.4
+.. _v0.2.3: https://github.com/miurahr/py7zr/compare/v0.2.2...v0.2.3
 .. _v0.2.2: https://github.com/miurahr/py7zr/compare/v0.2.0...v0.2.2
 .. _v0.2.0: https://github.com/miurahr/py7zr/compare/v0.1.0...v0.2.0
 .. _v0.1.0: https://github.com/miurahr/py7zr/compare/v0.0.1...v0.1.0
