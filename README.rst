@@ -2,6 +2,21 @@
 PPMd for python
 ===============
 
+.. image:: https://readthedocs.org/projects/ppmd-cffi/badge/?version=latest
+  :target: https://ppmd-cffi.readthedocs.io/en/latest/?badge=latest
+
+.. image:: https://badge.fury.io/py/ppmd-cffi.svg
+  :target: https://badge.fury.io/py/ppmd-cffi
+
+.. image:: https://github.com/miurahr/ppmd-cffi/workflows/Run%20Tox%20tests/badge.svg
+  :target: https://github.com/miurahr/ppmd-cffi/actions
+
+.. image:: https://coveralls.io/repos/github/miurahr/ppmd-cffi/badge.svg?branch=master
+  :target: https://coveralls.io/github/miurahr/ppmd-cffi?branch=master
+
+
+
+
 PPM(Prediction by partial matching) is a compression algorithm which has several variations of implementations.
 PPMd is the implementation by Dmitry Shkarin. It is used in the RAR by default and by 7-Zip as one of several possible methods.
 
