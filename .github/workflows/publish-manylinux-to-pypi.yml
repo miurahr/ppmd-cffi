@@ -31,12 +31,11 @@ jobs:
         uses: RalfG/python-wheels-manylinux-build@v0.3.1-manylinux2014_x86_64
         with:
           python-versions: 'cp36-cp36m cp37-cp37m cp38-cp38 cp39-cp39'
-          package-path: ''
           pip-wheel-args: '--no-deps'
       - name: Gather manylinux2014 wheels
         run: |
           mkdir -p publish
-          cp wheelhouse/ppmd_cffi-*-manylinux2014*.whl publish/
+          cp dist/ppmd_cffi-*-manylinux*.whl publish/
       - name: Publish distribution 📦 to Test PyPI
         if: startsWith(github.event.ref, 'refs/heads/main')
         uses: pypa/gh-action-pypi-publish@master
