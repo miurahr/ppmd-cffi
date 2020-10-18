@@ -1,0 +1,32 @@
+arch: arm64
+os: linux
+language: python
+services:
+- docker
+env:
+  DOCKER_IMAGE=quay.io/pypa/manylinux2014_aarch64
+  PLAT=manylinux2014_aarch64
+
+install:
+- docker pull $DOCKER_IMAGE
+
+script:
+- docker run --rm -e PLAT=$PLAT -v `pwd`:/io $DOCKER_IMAGE $PRE_CMD /io/ci/build-manylinux-wheels.sh
+
+deploy:
+  - provider: pypi
+    username: __token__
+    password:
+      secure: brdkyDLWgItcEwjfU2patvfSw45hkBzyD60IIUsdeZJRS1gOTLV9/Pk2Iy5J9Mk2S1p0qp6O7pTl4P6jzW1a+1THpbApgIPgYXCokJmIMfsiE/KEqJFH740LdSM+gzzMdUIEyHv0fAV4M8CUWfpqBlwfLL12TYkrO7mjiZo6WYrjigxZ2obaXT6G8ecYd0Vn8PzIovmYYt5zq6a4+bevpd6ioJRRYbBBgcsYgjoGE7sHfV6QxUmCFnlvujOIaXz1J25TcCeEkIOiBKCNdfMxE+95u4tacuTK+G+gL/iezVOoHIa9ZMN5gxEBthqF8uY6khaU9YkRRSquOMUpJayjnDl2bk5mC1RwE9gdYtvFuKecBjC9TokGkeDeaPVf2P1WyhJOuncKJzVqVGUFuMqrI6Toy78En62qVi/RSiFzTsaNot9QDxj2EobZeDHDZSuVq4aBtmMTfN6cNEKKWM0QEDFuBRWf2G/lb4NgNO1fP7POY3oG0KOKB2cZEGnCU9TETZ0r6ysRNPWKR3hsjJfBEAZuZymkF+sOb6OgCIRQaOcvh40CRCsPqrKV4mgeuaM+tCG1QQu2q20WTPf0j9CZ8BvdCCpUrL69B0RPOqKGIE2MPgMjfRGOjbG2lZ4hvIdLdljhit3ScJcfJfMaDJwvFNbNeTDe1CIrFZrI94Nsd/g=
+    on:
+      branch: main
+      tags: true
+    skip_existing: true
+  - provider: pypi
+    username: __token__
+    server: https://test.pypi.org/legacy/
+    password:
+      secure: "jspXXc9Sd6ryQeHu3+Wo485Ob9xl3WDM+YrMnEYLS/bREcWtBzY52wQ87x6XcqqZykrOCHi8z6C74DtnEPIVTH576Z5byJwmEP/8lykmA60vy1GNXkSJTohvIoHBDCkJ3/vd3da/0PD2SgLkWTD4Zqv9+FaNqzKib9egREG2t5SShFsdP2Pihb7Bqh2ea0pNeWJQ1BLrMbXuKY9Wa8bmK7jiXV5DHmyd2HN3uhZvjoO9didz5d0ER+/gWoX6PIbfvvdJPvKeEvJg7WykxvH23iJXafnJ+zS4G0fnPtSX48Ii5PHvaTrFQqZdI8FVFVwgaH8t29pFqc6isQ9MwnEkfCC8VDrDxOUnEEYZwG5fAbo2VGxfpusG5puEtAoh8h96ePY4G6DZ3d6EQ8euSy8X8XX3Z3Or/nb/GM4vjWUhhehCqCg1tB3qKpGNOYkU04XwVUluZG3sO4z9M3dhZnRkbVgrk8li5kNssnxebS6wCOTMZQbw1NKdvB5hXb+ShNOmlCMtXJNoJ4ZKofhq/IH9zHkhJPqgVl1rvdMRaI1nROKLV6OeHtFtFOsnvjK1Pp8h7YXH5DZozfZ4Elnkepy5AHEIIvzGX4m6zEmXIq+eM+O3hDrCResg7Z8uGH+pR9S1o4U0FiSpYc75gWOVus426Rjf/HR/5ZBLWefYxAondN8="
+    on:
+      branch: main
+    skip_existing: true
