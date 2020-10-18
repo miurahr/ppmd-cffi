@@ -28,7 +28,7 @@ Security
 `v0.2.5`_
 =========
 
-* Publish i686 and aarch64 manylinux2014 binary packages.
+* Publish aarch64 manylinux2014 binary package.
 
 `v0.2.4`_
 =========
