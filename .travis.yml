@@ -27,4 +27,6 @@ deploy:
     server: https://test.pypi.org/legacy/
     password:
       secure: "jspXXc9Sd6ryQeHu3+Wo485Ob9xl3WDM+YrMnEYLS/bREcWtBzY52wQ87x6XcqqZykrOCHi8z6C74DtnEPIVTH576Z5byJwmEP/8lykmA60vy1GNXkSJTohvIoHBDCkJ3/vd3da/0PD2SgLkWTD4Zqv9+FaNqzKib9egREG2t5SShFsdP2Pihb7Bqh2ea0pNeWJQ1BLrMbXuKY9Wa8bmK7jiXV5DHmyd2HN3uhZvjoO9didz5d0ER+/gWoX6PIbfvvdJPvKeEvJg7WykxvH23iJXafnJ+zS4G0fnPtSX48Ii5PHvaTrFQqZdI8FVFVwgaH8t29pFqc6isQ9MwnEkfCC8VDrDxOUnEEYZwG5fAbo2VGxfpusG5puEtAoh8h96ePY4G6DZ3d6EQ8euSy8X8XX3Z3Or/nb/GM4vjWUhhehCqCg1tB3qKpGNOYkU04XwVUluZG3sO4z9M3dhZnRkbVgrk8li5kNssnxebS6wCOTMZQbw1NKdvB5hXb+ShNOmlCMtXJNoJ4ZKofhq/IH9zHkhJPqgVl1rvdMRaI1nROKLV6OeHtFtFOsnvjK1Pp8h7YXH5DZozfZ4Elnkepy5AHEIIvzGX4m6zEmXIq+eM+O3hDrCResg7Z8uGH+pR9S1o4U0FiSpYc75gWOVus426Rjf/HR/5ZBLWefYxAondN8="
+    on:
+      branch: main
     skip_existing: true
