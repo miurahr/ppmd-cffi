@@ -86,31 +86,23 @@ class PpmdDecoder:
     def __init__(self, source: BinaryIO, max_order: int, mem_size: int):
         if not source.readable:
             raise ValueError
-        self.source = source
         self.ppmd = ffi.new('CPpmd7 *')
+        lib.ppmd_state_init(self.ppmd, max_order, mem_size)
         self.rc = ffi.new('CPpmd7z_RangeDec *')
         self.reader = ffi.new('RawReader *')
-        self.max_order = max_order  # type: int
-        self.mem_size = mem_size  # type: int
-        self.initialized = False
-        self.closed = False
-
-    def _init2(self):
+        self.source = source  # read indirectly through self._userdata
         self._userdata = ffi.new_handle(self)
-        lib.ppmd_state_init(self.ppmd, self.max_order, self.mem_size)
+        self.closed = False
         lib.ppmd_decompress_init(self.rc, self.reader, lib.src_readinto, self._userdata)
 
     def decode(self, length) -> bytes:
-        if not self.initialized:
-            self._init2()
-            self.initialized = True
-        outbuf = bytearray()
+        b = bytearray()
         for _ in range(length):
             sym = lib.Ppmd7_DecodeSymbol(self.ppmd, self.rc)
-            outbuf += sym.to_bytes(1, 'little')
+            b += sym.to_bytes(1, 'little')
         if self.rc.Code != 0:
-            pass
-        return bytes(outbuf)
+            pass  # FIXME
+        return bytes(b)
 
     def close(self):
         if self.closed:
