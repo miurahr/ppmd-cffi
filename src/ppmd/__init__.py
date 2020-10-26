@@ -234,3 +234,37 @@ class PpmdBufferDecoder:
 
     def __exit__(self, types, value, traceback):
         self.close()
+
+
+class Ppmd8Encoder:
+
+    def __init__(self, destination: Union[BinaryIO, PpmdBuffer], max_order: int, mem_size: int):
+        self.closed = False
+        self.flushed = False
+        self.destination = destination
+        self.ppmd = ffi.new('CPpmd8 *')
+        self.writer = ffi.new('RawWriter *')
+        self._userdata = ffi.new_handle(self)
+        lib.ppmd8_state_init(self.ppmd, max_order, mem_size)
+        lib.ppmd8_compress_init(self.ppmd, self.writer, lib.dst_write, self._userdata)
+
+    def encode(self, inbuf) -> None:
+        for sym in inbuf:
+            lib.Ppmd8_EncodeSymbol(self.ppmd, sym)
+
+    def flush(self):
+        lib.Ppmd8_RangeEnc_FlushData(self.ppmd)
+        return
+
+    def close(self):
+        if self.closed:
+            return
+        self.closed = True
+        ffi.release(self.ppmd)
+        ffi.release(self.writer)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.close()
