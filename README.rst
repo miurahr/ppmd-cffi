@@ -25,6 +25,12 @@ Core codes are derived from p7zip, portable 7-zip implementation, and now only c
 
 Since 7-zip uses PPMd ver.H and RAR uses PPMd ver.I, the ppmd-cffi is considered compatible with 7-zip's implementation. 
 
+Development status
+==================
+
+A development status is condidere as `3 - Alpha`
+
+
 Installation
 ============
 
