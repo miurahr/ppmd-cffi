@@ -1,7 +1,4 @@
-import array
-import io
-import mmap
-from typing import BinaryIO, Optional, Union
+from typing import BinaryIO
 
 try:
     from importlib.metadata import PackageNotFoundError, version
