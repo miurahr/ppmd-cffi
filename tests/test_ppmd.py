@@ -33,16 +33,6 @@ def test_ppmd_encoder2():
         assert result == f.read()
 
 
-def test_ppmd_buffer_encoder():
-    with ppmd.PpmdBufferEncoder(6, 16 << 20) as encoder:
-        result = encoder.encode(data[:33])
-        result += encoder.encode(data[33:])
-        result += encoder.flush()
-        assert len(result) == 41
-    with testdata_path.joinpath('ppmd.dat').open('rb') as f:
-        assert result == f.read()
-
-
 def test_ppmd_decoder():
     with testdata_path.joinpath('ppmd.dat').open('rb') as f:
         with ppmd.PpmdDecoder(f, 6, 16 << 20) as decoder:
@@ -51,44 +41,34 @@ def test_ppmd_decoder():
             assert result == data
 
 
-def test_ppmd_buffer_decoder():
-    with testdata_path.joinpath('ppmd.dat').open('rb') as f:
-        with ppmd.PpmdBufferDecoder(6, 16 << 20) as decoder:
-            result = decoder.decode(f.read(), 66)
-    assert result == data
-
-
 def test_ppmd_encode_decode(tmp_path):
     length = 0
     m = hashlib.sha256()
     with testdata_path.joinpath('10000SalesRecords.csv').open('rb') as f:
         with tmp_path.joinpath('target.ppmd').open('wb') as target:
-            with ppmd.PpmdBufferEncoder(6, 16 << 20) as enc:
+            with ppmd.PpmdEncoder(target, 6, 16 << 20) as enc:
                 data = f.read(READ_BLOCKSIZE)
                 while len(data) > 0:
                     m.update(data)
                     length += len(data)
-                    res = enc.encode(data)
-                    target.write(res)
+                    enc.encode(data)
                     data = f.read(READ_BLOCKSIZE)
-                res = enc.flush()
-                target.write(res)
+                enc.flush()
     shash = m.digest()
     m2 = hashlib.sha256()
     with tmp_path.joinpath('target.ppmd').open('rb') as target:
-        with tmp_path.joinpath('target.csv').open('wb') as o:
-            with ppmd.PpmdBufferDecoder(6, 16 << 20) as dec:
+        with tmp_path.joinpath('target.csv').open('wb') as out:
+            with ppmd.PpmdDecoder(target, 6, 16 << 20) as dec:
                 remaining = length
-                data = target.read(READ_BLOCKSIZE)
-                while len(data) > 0:
-                    res = dec.decode(data, remaining)
+                while remaining > 0:
+                    max_length = min(remaining, READ_BLOCKSIZE)
+                    res = dec.decode(max_length)
                     remaining -= len(res)
                     m2.update(res)
-                    o.write(res)
-                    data = target.read(READ_BLOCKSIZE)
-                res = dec.decode(b'', remaining)
+                    out.write(res)
+                res = dec.decode(remaining)
                 remaining -= len(res)
                 m2.update(res)
-                o.write(res)
+                out.write(res)
     thash = m2.digest()
     assert thash == shash
