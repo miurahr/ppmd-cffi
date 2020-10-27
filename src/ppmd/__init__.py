@@ -236,25 +236,68 @@ class PpmdBufferDecoder:
         self.close()
 
 
+class Ppmd8Decoder:
+
+    def __init__(self, source: BinaryIO, max_order: int, mem_size: int, restore: int):
+        self.closed = False
+        self.source = source
+        self.ppmd = ffi.new('CPpmd8 *')
+        self.reader = ffi.new('RawReader *')
+        self._userdata = ffi.new_handle(self)
+        self.max_order = max_order  # type: int
+        self.mem_size = mem_size  # type: int
+        self.restore = restore  # type: int
+        lib.ppmd8_decompress_init(self.ppmd, self.reader, lib.src_readinto, self._userdata)
+        lib.ppmd8_state_init(self.ppmd, max_order, mem_size << 20, restore)
+
+    def decode(self, length):
+        outbuf = bytearray()
+        for _ in range(length):
+            sym = lib.Ppmd8_DecodeSymbol(self.ppmd)
+            if sym < 0:
+                break
+            outbuf += sym.to_bytes(1, 'little')
+        if self.ppmd.Code != 0:
+            pass  # FIXME
+        return bytes(outbuf)
+
+    def close(self):
+        if not self.closed:
+            lib.ppmd8_state_close(self.ppmd)
+            ffi.release(self.ppmd)
+            ffi.release(self.reader)
+            self.closed = True
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
+
+
 class Ppmd8Encoder:
 
-    def __init__(self, destination: Union[BinaryIO, PpmdBuffer], max_order: int, mem_size: int):
+    def __init__(self, destination: BinaryIO, max_order: int, mem_size: int, restore: int):
         self.closed = False
         self.flushed = False
         self.destination = destination
         self.ppmd = ffi.new('CPpmd8 *')
         self.writer = ffi.new('RawWriter *')
+        self.max_order = max_order  # type: int
+        self.mem_size = mem_size  # type: int
+        self.restore = restore
         self._userdata = ffi.new_handle(self)
-        lib.ppmd8_state_init(self.ppmd, max_order, mem_size)
         lib.ppmd8_compress_init(self.ppmd, self.writer, lib.dst_write, self._userdata)
+        lib.ppmd8_state_init(self.ppmd, max_order, mem_size << 20, restore)
 
     def encode(self, inbuf) -> None:
         for sym in inbuf:
             lib.Ppmd8_EncodeSymbol(self.ppmd, sym)
 
     def flush(self):
+        lib.Ppmd8_EncodeSymbol(self.ppmd, -1)  # endmark
         lib.Ppmd8_RangeEnc_FlushData(self.ppmd)
-        return
+        self.flushed = True
 
     def close(self):
         if self.closed:
@@ -266,5 +309,5 @@ class Ppmd8Encoder:
     def __enter__(self):
         return self
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()

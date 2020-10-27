@@ -209,6 +209,11 @@ void Ppmd7z_RangeEnc_Init(CPpmd7z_RangeEnc *p);
 void Ppmd7z_RangeEnc_FlushData(CPpmd7z_RangeEnc *p);
 void Ppmd7_EncodeSymbol(CPpmd7 *p, CPpmd7z_RangeEnc *rc, int symbol);
 
+void ppmd8_state_init(CPpmd8 *p, unsigned int maxOrder, unsigned int memSize, unsigned int restore);
+void ppmd8_state_close(CPpmd8 *p);
+void ppmd8_decompress_init(CPpmd8 *p, RawReader *reader, int (*src_readinto)(char*, int, void*), void *userdata);
+void ppmd8_compress_init(CPpmd8 *p, RawWriter *writer, void (*dst_write)(char*, int, void*), void *userdata);
+
 void Ppmd8_Construct(CPpmd8 *p);
 void Ppmd8_Init(CPpmd8 *p, unsigned maxOrder, unsigned restoreMethod);
 int Ppmd8_DecodeSymbol(CPpmd8 *p);
@@ -270,11 +275,12 @@ int ppmd_decompress_init(CPpmd7z_RangeDec *rc, RawReader *reader,
     return res;
 }
 
-void ppmd8_state_init(CPpmd7 *p, unsigned int maxOrder, unsigned int memSize)
+void ppmd8_state_init(CPpmd8 *p, unsigned int maxOrder, unsigned int memSize, unsigned int restore)
 {
     Ppmd8_Construct(p);
     Ppmd8_Alloc(p, memSize, &allocator);
-    Ppmd8_Init(p, maxOrder, 0);
+    Ppmd8_RangeDec_Init(p);
+    Ppmd8_Init(p, maxOrder, restore);
 }
 
 void ppmd8_state_close(CPpmd8 *ppmd)
@@ -292,7 +298,7 @@ void ppmd8_compress_init(CPpmd8 *p, RawWriter *writer,
 }
 
 void ppmd8_decompress_init(CPpmd8 *p, RawReader *reader,
-                         void (*src_readinto)(char*, int, void*), void *userdata)
+                         int (*src_readinto)(char*, int, void*), void *userdata)
 {
     reader->Read = Read;
     reader->src_readinto = src_readinto;
