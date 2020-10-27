@@ -12,7 +12,7 @@ stream.
 PPMd is an implementation of PPMII by Dmitry Shkarin.
 
 The ppmd-cffi package uses core C files from p7zip.
-The library has a bere function and no metadata/header handling functions.
+The library has a bare function and no metadata/header handling functions.
 This means you should know compression parameters and input/output data
 sizes.
 
@@ -39,16 +39,6 @@ Compression/Encoding
 
 .. code-block:: python
 
-    data = b'abcdefghijk123456789'
-    level = 6
-    memSize = 16 << 20 # 16Mb
-    with ppmd.PpmdBufferEncoder(level, memSize) as encoder:
-        result = encoder.encode(data)
-        result += encoder.flush()
-
-
-.. code-block:: python
-
     data1 = b'abcdefghijk123456789'
     data2 = b'123456'
     level = 6
@@ -68,19 +58,6 @@ Decompression/Decoding
 .. code-block:: python
 
     level = 6
-    memSize = 16 << 20
-    length = 65536
-    with pathlib.Path('compressed.data.bin').open('rb') as f:
-        with ppmd.PpmdBufferDecoder(f, level, memSize) as decoder:
-            result = decoder.decode(f.read(1024), length)
-            remaining = length - len(result)
-            result += decoder.decode(f.read(), remaining)
-    assert len(result) == length
-
-
-.. code-block:: python
-
-    level = 6
     memSize = 16
     outsize1 = 16384
     outsize2 = 1245
@@ -89,4 +66,3 @@ Decompression/Decoding
             result = decoder.decode(outsize1)
             result += decoder.decode(outsize2)
     assert len(result) == outsize1 + outsizse2
-
