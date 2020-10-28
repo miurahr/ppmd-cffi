@@ -15,5 +15,6 @@ recursive-include tests *.py
 recursive-include tests *.bin
 recursive-include tests *.csv
 recursive-include tests *.dat
+recursive-include tests *.ppmd
 recursive-include tools *.cpp
 recursive-include tools *.sh

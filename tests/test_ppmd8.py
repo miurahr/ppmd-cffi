@@ -6,47 +6,37 @@ import pathlib
 import ppmd
 
 testdata_path = pathlib.Path(os.path.dirname(__file__)).joinpath('data')
-data = b'This file is located in a folder.This file is located in the root.'
+source = b'This file is located in a folder.This file is located in the root.\n'
+encoded = b'\x54\x16\x43\x6d\x5c\xd8\xd7\x3a\xb3\x58\x31\xac\x1d\x09\x23\xfd\x11\xd5\x72\x62\x73' \
+          b'\x13\xb6\xce\xb2\xe7\x6a\xb9\xf6\xe8\x66\xf5\x08\xc3\x0a\x09\x36\x12\xeb\xda\xda\xba'
 READ_BLOCKSIZE = 16384
 
 
-def test_ppmd_encoder():
+def test_ppmd8_encoder():
     with io.BytesIO() as dst:
-        with ppmd.PpmdEncoder(dst, 6, 16 << 20) as encoder:
-            encoder.encode(data)
+        with ppmd.Ppmd8Encoder(dst, 6, 8, 0) as encoder:
+            encoder.encode(source)
             encoder.flush()
+        dst.seek(0)
         result = dst.getvalue()
-        assert len(result) == 41
-    with testdata_path.joinpath('ppmd7.dat').open('rb') as f:
-        assert result == f.read()
+    assert result == encoded
 
 
-def test_ppmd_encoder2():
-    with io.BytesIO() as dst:
-        with ppmd.PpmdEncoder(dst, 6, 16 << 20) as encoder:
-            encoder.encode(data[:33])
-            encoder.encode(data[33:])
-            encoder.flush()
-        result = dst.getvalue()
-        assert len(result) == 41
-    with testdata_path.joinpath('ppmd7.dat').open('rb') as f:
-        assert result == f.read()
+def test_ppmd8_decoder():
+    with io.BytesIO() as src:
+        src.write(encoded)
+        src.seek(0)
+        with ppmd.Ppmd8Decoder(src, 6, 8, 0) as decoder:
+            result = decoder.decode(len(source))
+    assert result == source
 
 
-def test_ppmd_decoder():
-    with testdata_path.joinpath('ppmd7.dat').open('rb') as f:
-        with ppmd.PpmdDecoder(f, 6, 16 << 20) as decoder:
-            result = decoder.decode(33)
-            result += decoder.decode(33)
-            assert result == data
-
-
-def test_ppmd_encode_decode(tmp_path):
+def test_ppmd8_encode_decode(tmp_path):
     length = 0
     m = hashlib.sha256()
     with testdata_path.joinpath('10000SalesRecords.csv').open('rb') as f:
         with tmp_path.joinpath('target.ppmd').open('wb') as target:
-            with ppmd.PpmdEncoder(target, 6, 16 << 20) as enc:
+            with ppmd.Ppmd8Encoder(target, 6, 8, 0) as enc:
                 data = f.read(READ_BLOCKSIZE)
                 while len(data) > 0:
                     m.update(data)
@@ -58,7 +48,7 @@ def test_ppmd_encode_decode(tmp_path):
     m2 = hashlib.sha256()
     with tmp_path.joinpath('target.ppmd').open('rb') as target:
         with tmp_path.joinpath('target.csv').open('wb') as out:
-            with ppmd.PpmdDecoder(target, 6, 16 << 20) as dec:
+            with ppmd.Ppmd8Decoder(target, 6, 8, 0) as dec:
                 remaining = length
                 while remaining > 0:
                     max_length = min(remaining, READ_BLOCKSIZE)

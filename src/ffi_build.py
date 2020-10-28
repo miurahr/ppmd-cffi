@@ -4,7 +4,8 @@ import sys
 import cffi  # type: ignore  # noqa
 
 src_root = pathlib.Path(__file__).parent.joinpath('ext')
-sources = [src_root.joinpath(s).as_posix() for s in ['Ppmd7.c', 'Ppmd7Dec.c', 'Ppmd7Enc.c']]
+sources = [src_root.joinpath(s).as_posix() for s in ['Ppmd7.c', 'Ppmd7Dec.c', 'Ppmd7Enc.c',
+                                                     'Ppmd8.c', 'Ppmd8Dec.c', 'Ppmd8Enc.c']]
 
 
 def is_64bit() -> bool:
@@ -69,8 +70,10 @@ struct CPpmd7_Context_;
 
 if is_64bit():
     ffibuilder.cdef('typedef UInt32 CPpmd7_Context_Ref;')
+    ffibuilder.cdef('typedef UInt32 CPpmd_State_Ref;')
 else:
     ffibuilder.cdef('typedef struct CPpmd7_Context_ CPpmd7_Context_Ref;')
+    ffibuilder.cdef('typedef struct CPpmd_State_ * CPpmd_State_Ref;')
 
 ffibuilder.cdef(r'''
 typedef struct CPpmd7_Context_
@@ -120,6 +123,58 @@ typedef struct
 } CPpmd7z_RangeEnc;
 ''')
 
+# Ppmd8.h
+if is_64bit():
+    ffibuilder.cdef('typedef UInt32 CPpmd8_Context_Ref;')
+else:
+    ffibuilder.cdef('typedef struct CPpmd8_Context_ * CPpmd8_Context_Ref;')
+
+ffibuilder.cdef(r'''
+typedef struct CPpmd8_Context_
+{
+  Byte NumStats;
+  Byte Flags;
+  UInt16 SummFreq;
+  CPpmd_State_Ref Stats;
+  CPpmd8_Context_Ref Suffix;
+} CPpmd8_Context;
+''')
+
+ffibuilder.cdef(r'''
+typedef struct
+{
+  CPpmd8_Context *MinContext, *MaxContext;
+  CPpmd_State *FoundState;
+  unsigned OrderFall, InitEsc, PrevSuccess, MaxOrder;
+  Int32 RunLength, InitRL; /* must be 32-bit at least */
+
+  UInt32 Size;
+  UInt32 GlueCount;
+  Byte *Base, *LoUnit, *HiUnit, *Text, *UnitsStart;
+  UInt32 AlignOffset;
+  unsigned RestoreMethod;
+
+  /* Range Coder */
+  UInt32 Range;
+  UInt32 Code;
+  UInt32 Low;
+  union
+  {
+    IByteIn *In;
+    IByteOut *Out;
+  } Stream;
+
+  Byte Indx2Units[38];
+  Byte Units2Indx[128];
+  CPpmd_Void_Ref FreeList[38];
+  UInt32 Stamps[38];
+
+  Byte NS2BSIndx[256], NS2Indx[260];
+  CPpmd_See DummySee, See[24][32];
+  UInt16 BinSumm[25][64];
+} CPpmd8;
+''')
+
 # ----------- python binding API ---------------------
 # ppmdpy.h
 ffibuilder.cdef(r'''
@@ -153,6 +208,18 @@ int Ppmd7_DecodeSymbol(CPpmd7 *p, CPpmd7z_RangeDec *rc);
 void Ppmd7z_RangeEnc_Init(CPpmd7z_RangeEnc *p);
 void Ppmd7z_RangeEnc_FlushData(CPpmd7z_RangeEnc *p);
 void Ppmd7_EncodeSymbol(CPpmd7 *p, CPpmd7z_RangeEnc *rc, int symbol);
+
+void ppmd8_malloc(CPpmd8 *p, unsigned int memSize);
+void ppmd8_mfree(CPpmd8 *ppmd);
+void ppmd8_decompress_init(CPpmd8 *p, RawReader *reader, int (*src_readinto)(char*, int, void*), void *userdata);
+void ppmd8_compress_init(CPpmd8 *p, RawWriter *writer, void (*dst_write)(char*, int, void*), void *userdata);
+
+void Ppmd8_Construct(CPpmd8 *p);
+void Ppmd8_Init(CPpmd8 *p, unsigned maxOrder, unsigned restoreMethod);
+void Ppmd8_EncodeSymbol(CPpmd8 *p, int symbol);
+void Ppmd8_RangeEnc_FlushData(CPpmd8 *p);
+Bool Ppmd8_RangeDec_Init(CPpmd8 *p);
+int Ppmd8_DecodeSymbol(CPpmd8 *p);
 ''')
 
 # ---------------------------------------------------------------------------
@@ -207,6 +274,34 @@ int ppmd_decompress_init(CPpmd7z_RangeDec *rc, RawReader *reader,
     Bool res = Ppmd7z_RangeDec_Init(rc);
     return res;
 }
+
+void ppmd8_malloc(CPpmd8 *p, unsigned int memSize)
+{
+    Ppmd8_Alloc(p, memSize, &allocator);
+}
+
+void ppmd8_mfree(CPpmd8 *ppmd)
+{
+    Ppmd8_Free(ppmd, &allocator);
+}
+
+void ppmd8_compress_init(CPpmd8 *p, RawWriter *writer,
+                         void (*dst_write)(char*, int, void*), void *userdata)
+{
+    writer->Write = Write;
+    writer->dst_write = dst_write;
+    writer->userdata = userdata;
+    p->Stream.Out = (IByteOut *) writer;
+}
+
+void ppmd8_decompress_init(CPpmd8 *p, RawReader *reader,
+                         int (*src_readinto)(char*, int, void*), void *userdata)
+{
+    reader->Read = Read;
+    reader->src_readinto = src_readinto;
+    reader->userdata = userdata;
+    p->Stream.In = (IByteIn *) reader;
+} 
 ''', sources=sources, include_dirs=[src_root])
 
 if __name__ == "__main__":  # not when running with setuptools
