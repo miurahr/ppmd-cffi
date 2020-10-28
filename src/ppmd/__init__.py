@@ -1,9 +1,9 @@
+import argparse
 import array
 import io
 import mmap
-import struct
-import argparse
 import pathlib
+import struct
 from typing import Any, BinaryIO, Optional, Union
 
 try:
