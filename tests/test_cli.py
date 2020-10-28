@@ -10,6 +10,7 @@ from ppmd import main
 testdata_path = os.path.join(os.path.dirname(__file__), 'data')
 source = b'This file is located in a folder.This file is located in the root.\n'
 
+
 def test_cli_help(capsys):
     expected = '''usage: ppmd [-h] [-x] target
 

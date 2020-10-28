@@ -255,7 +255,7 @@ class Ppmd8Decoder:
         self.restore = restore  # type: int
         lib.ppmd8_decompress_init(self.ppmd, self.reader, lib.src_readinto, self._userdata)
         lib.Ppmd8_Construct(self.ppmd)
-        lib.ppmd8_malloc(self.ppmd,  mem_size << 20)
+        lib.ppmd8_malloc(self.ppmd, mem_size << 20)
         lib.Ppmd8_RangeDec_Init(self.ppmd)
         lib.Ppmd8_Init(self.ppmd, max_order, restore)
 
