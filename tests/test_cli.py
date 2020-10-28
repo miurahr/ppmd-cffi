@@ -1,9 +1,7 @@
-import binascii
-import hashlib
 import os
 import shutil
 
-import pytest
+import pytest  # type: ignore
 
 from ppmd import main
 
