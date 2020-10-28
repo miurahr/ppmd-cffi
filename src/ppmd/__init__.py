@@ -1,12 +1,15 @@
 import array
 import io
 import mmap
-from typing import BinaryIO, Optional, Union
+import struct
+import argparse
+import pathlib
+from typing import Any, BinaryIO, Optional, Union
 
 try:
     from importlib.metadata import PackageNotFoundError, version
 except ImportError:
-    from importlib_metadata import PackageNotFoundError, version  # type: ignore
+    from importlib_metadata import PackageNotFoundError, version  # type: ignore  # noqa
 
 __copyright__ = 'Copyright (C) 2020 Hiroshi Miura'
 
@@ -17,6 +20,9 @@ except PackageNotFoundError:  # pragma: no-cover
     __version__ = "unknown"
 
 from _ppmd import ffi, lib  # type: ignore  # noqa
+
+MAGIC = 0x84ACAF8F
+READ_BLOCKSIZE = 16384
 
 _PPMD7_MIN_ORDER = 2
 _PPMD7_MAX_ORDER = 64
@@ -152,7 +158,7 @@ class PpmdBufferEncoder:
     def __enter__(self):
         return self
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, exc_type, exc_val, exc_tb):
         if not self.flushed:
             self.flush()
         self.close()
@@ -201,7 +207,7 @@ class PpmdDecoder:
     def __enter__(self):
         return self
 
-    def __exit__(self, types, value, traceback):
+    def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
 
 
@@ -232,7 +238,7 @@ class PpmdBufferDecoder:
     def __enter__(self):
         return self
 
-    def __exit__(self, types, value, traceback):
+    def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
 
 
@@ -317,3 +323,118 @@ class Ppmd8Encoder:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
+
+
+class PpmdHeader:
+
+    size = 16
+
+    def __init__(self):
+        self.attr = 0x80
+        self.info = 8 << 12
+        self.fnlen = 1
+        self.restore = 0
+        self.version = 8
+
+    def read(self, file):
+        if struct.unpack("<I", file.read(4))[0] != MAGIC:
+            raise ValueError("Invalid header {}\n".format(self.magic))
+        self.attr = struct.unpack("<I", file.read(4))[0]
+        self.info = struct.unpack("<H", file.read(2))[0]
+        self.version = self.info >> 12
+        fn_len = struct.unpack("<H", file.read(2))[0]
+        self.restore = fn_len >> 14
+        file.read(2)
+        file.read(2)
+        file.read(fn_len & 0x1FF)
+
+    def write(self, file, order, mem, restore):
+        self.info = (self.version << 12) | ((mem - 1) << 4) | (order - 1) & 0x0f
+        self.fnlen = 1 | (restore << 14)
+        file.write(struct.pack("<I", MAGIC))
+        file.write(struct.pack("<I", self.attr))
+        file.write(struct.pack("<H", self.info))
+        file.write(struct.pack("<H", self.fnlen))
+        file.write(b'\x00\x00')
+        file.write(b'\x00\x00')
+        file.write(b'a')
+
+    def __len__(self):
+        return self.size
+
+
+class Ppmd8Decompressor:
+
+    def __init__(self, file, filesize):
+        hdr = PpmdHeader()
+        hdr.read(file)
+        restore = hdr.restore
+        order = (hdr.info & 0x0f) + 1
+        mem = ((hdr.info >> 4) & 0xff) + 1
+        self.decoder = Ppmd8Decoder(file, order, mem, restore)
+        self.file = file
+        self.size = filesize
+
+    def decompress(self, ofile):
+        while self.file.tell() < self.size:
+            data = self.decoder.decode(READ_BLOCKSIZE)
+            if len(data) == 0:
+                break
+            ofile.write(data)
+
+    def close(self):
+        self.decoder.close()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
+
+    def __enter__(self):
+        return self
+
+
+class Ppmd8Compressor:
+
+    def __init__(self, ofile, order, mem):
+        PpmdHeader().write(ofile, order, mem, 0)
+        self.encoder = Ppmd8Encoder(ofile, order, mem, 0)
+
+    def compress(self, src):
+        data = src.read(READ_BLOCKSIZE)
+        while len(data) > 0:
+            self.encoder.encode(data)
+            data = src.read(READ_BLOCKSIZE)
+        self.encoder.flush()
+
+    def close(self):
+        self.encoder.close()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
+
+    def __enter__(self):
+        return self
+
+
+def main(arg: Optional[Any] = None):
+    parser = argparse.ArgumentParser(prog='ppmd', description='ppmd')
+    parser.add_argument("-x", action="store_true")
+    parser.add_argument("target")
+    args = parser.parse_args(arg)
+    targetfile = pathlib.Path(args.target)
+    if args.x:
+        if targetfile.suffix != '.ppmd':
+            print("Target file does not have .ppmd suffix.")
+            exit(1)
+        target_size = targetfile.stat().st_size
+        parent = targetfile.parent
+        extractedfile = pathlib.Path(parent.joinpath(targetfile.stem))
+        with extractedfile.open('wb') as ofile:
+            with targetfile.open('rb') as target:
+                with Ppmd8Decompressor(target, target_size) as decompressor:
+                    decompressor.decompress(ofile)
+    else:
+        archivefile = pathlib.Path(str(targetfile) + '.ppmd')
+        with archivefile.open('wb') as target:
+            with targetfile.open('rb') as src:
+                with Ppmd8Compressor(target, 6, 8) as compressor:
+                    compressor.compress(src)
