@@ -21,14 +21,12 @@ PPM(Prediction by partial matching) is a compression algorithm which has several
 PPMd is the implementation by Dmitry Shkarin. It is used in the RAR by default and by 7-Zip as one of several possible methods.
 
 ppmd, aka. ppmd-cffi, is a python bindings with PPMd implementation by C language.
-Core codes are derived from p7zip, portable 7-zip implementation, and now only consist of Ppmd7, PPMd ver.H.
-
-Since 7-zip uses PPMd ver.H and RAR uses PPMd ver.I, the ppmd-cffi is considered compatible with 7-zip's implementation. 
+Codes are derived from p7zip, portable 7-zip implementation, for Ppmd7, PPMd ver.H and Ppmd8, PPMd ver.I.
 
 Development status
 ==================
 
-A development status is condidere as `3 - Alpha`
+A development status is considered as `Alpha` state.
 
 
 Installation
@@ -48,17 +46,15 @@ Usage
 
 ppmd-cffi provide two classes. Both class supports context manager, ie. `with ... as ..` syntax.
 
-Encoder
--------
+PpmdEncoder, Ppmd8Encoder
+-------------------------
 
-Encoder class provide PPMd encoder. It has `encode()`, `flush()` and `close()` methos.
+Encoder class provide PPMd encoder. It has `encode()`, `flush()` and `close()` methods.
 
-Decoder
--------
+PpmdDecoder, Ppmd8Decoder
+-------------------------
 
-Decoder class pvoride PPMd decoder. It has `decode()` and `close()` methods.
-
-Please see test code for a detailed usage.
+Decoder class provide PPMd decoder. It has `decode()` and `close()` methods.
 
 
 License
