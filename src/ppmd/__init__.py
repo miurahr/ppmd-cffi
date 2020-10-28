@@ -248,7 +248,10 @@ class Ppmd8Decoder:
         self.mem_size = mem_size  # type: int
         self.restore = restore  # type: int
         lib.ppmd8_decompress_init(self.ppmd, self.reader, lib.src_readinto, self._userdata)
-        lib.ppmd8_state_init(self.ppmd, max_order, mem_size << 20, restore)
+        lib.Ppmd8_Construct(self.ppmd)
+        lib.ppmd8_malloc(self.ppmd,  mem_size << 20)
+        lib.Ppmd8_RangeDec_Init(self.ppmd)
+        lib.Ppmd8_Init(self.ppmd, max_order, restore)
 
     def decode(self, length):
         outbuf = bytearray()
@@ -263,7 +266,7 @@ class Ppmd8Decoder:
 
     def close(self):
         if not self.closed:
-            lib.ppmd8_state_close(self.ppmd)
+            lib.ppmd8_mfree(self.ppmd)
             ffi.release(self.ppmd)
             ffi.release(self.reader)
             self.closed = True
@@ -283,28 +286,31 @@ class Ppmd8Encoder:
         self.destination = destination
         self.ppmd = ffi.new('CPpmd8 *')
         self.writer = ffi.new('RawWriter *')
-        self.max_order = max_order  # type: int
-        self.mem_size = mem_size  # type: int
-        self.restore = restore
         self._userdata = ffi.new_handle(self)
         lib.ppmd8_compress_init(self.ppmd, self.writer, lib.dst_write, self._userdata)
-        lib.ppmd8_state_init(self.ppmd, max_order, mem_size << 20, restore)
+        lib.Ppmd8_Construct(self.ppmd)
+        lib.ppmd8_malloc(self.ppmd, mem_size << 20)
+        # lib.Ppmd8_RangeEnc_Init(self.ppmd)  # this is defined as macro
+        self.ppmd.Low = 0
+        self.ppmd.Range = 0xFFFFFFFF
+        lib.Ppmd8_Init(self.ppmd, max_order, restore)
 
     def encode(self, inbuf) -> None:
         for sym in inbuf:
             lib.Ppmd8_EncodeSymbol(self.ppmd, sym)
 
     def flush(self):
-        lib.Ppmd8_EncodeSymbol(self.ppmd, -1)  # endmark
-        lib.Ppmd8_RangeEnc_FlushData(self.ppmd)
-        self.flushed = True
+        if not self.flushed:
+            lib.Ppmd8_EncodeSymbol(self.ppmd, -1)  # endmark
+            lib.Ppmd8_RangeEnc_FlushData(self.ppmd)
+            self.flushed = True
 
     def close(self):
-        if self.closed:
-            return
-        self.closed = True
-        ffi.release(self.ppmd)
-        ffi.release(self.writer)
+        if not self.closed:
+            lib.ppmd8_mfree(self.ppmd)
+            self.closed = True
+            ffi.release(self.ppmd)
+            ffi.release(self.writer)
 
     def __enter__(self):
         return self

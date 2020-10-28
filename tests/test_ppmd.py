@@ -17,7 +17,7 @@ def test_ppmd_encoder():
             encoder.flush()
         result = dst.getvalue()
         assert len(result) == 41
-    with testdata_path.joinpath('ppmd.dat').open('rb') as f:
+    with testdata_path.joinpath('ppmd7.dat').open('rb') as f:
         assert result == f.read()
 
 
@@ -29,7 +29,7 @@ def test_ppmd_encoder2():
             encoder.flush()
         result = dst.getvalue()
         assert len(result) == 41
-    with testdata_path.joinpath('ppmd.dat').open('rb') as f:
+    with testdata_path.joinpath('ppmd7.dat').open('rb') as f:
         assert result == f.read()
 
 
@@ -39,12 +39,12 @@ def test_ppmd_buffer_encoder():
         result += encoder.encode(data[33:])
         result += encoder.flush()
         assert len(result) == 41
-    with testdata_path.joinpath('ppmd.dat').open('rb') as f:
+    with testdata_path.joinpath('ppmd7.dat').open('rb') as f:
         assert result == f.read()
 
 
 def test_ppmd_decoder():
-    with testdata_path.joinpath('ppmd.dat').open('rb') as f:
+    with testdata_path.joinpath('ppmd7.dat').open('rb') as f:
         with ppmd.PpmdDecoder(f, 6, 16 << 20) as decoder:
             result = decoder.decode(33)
             result += decoder.decode(33)
@@ -52,7 +52,7 @@ def test_ppmd_decoder():
 
 
 def test_ppmd_buffer_decoder():
-    with testdata_path.joinpath('ppmd.dat').open('rb') as f:
+    with testdata_path.joinpath('ppmd7.dat').open('rb') as f:
         with ppmd.PpmdBufferDecoder(6, 16 << 20) as decoder:
             result = decoder.decode(f.read(), 66)
     assert result == data
