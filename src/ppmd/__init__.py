@@ -44,17 +44,17 @@ def src_readinto(b: bytes, size: int, userdata: object) -> int:
     return result
 
 
-class PpmdEncoder:
+class Ppmd7Encoder:
 
     def __init__(self, destination: BinaryIO, max_order: int, mem_size: int):
-        self.closed = False
-        self.flushed = False
-        self.destination = destination
-        self.ppmd = ffi.new('CPpmd7 *')
-        self.rc = ffi.new('CPpmd7z_RangeEnc *')
-        self.writer = ffi.new('RawWriter *')
-        self._userdata = ffi.new_handle(self)
         if _PPMD7_MIN_ORDER <= max_order <= _PPMD7_MAX_ORDER and _PPMD7_MIN_MEM_SIZE <= mem_size <= _PPMD7_MAX_MEM_SIZE:
+            self.closed = False
+            self.flushed = False
+            self.destination = destination
+            self.ppmd = ffi.new('CPpmd7 *')
+            self.rc = ffi.new('CPpmd7z_RangeEnc *')
+            self.writer = ffi.new('RawWriter *')
+            self._userdata = ffi.new_handle(self)
             lib.ppmd_state_init(self.ppmd, max_order, mem_size)
             lib.ppmd_compress_init(self.rc, self.writer, lib.dst_write, self._userdata)
         else:
@@ -88,19 +88,22 @@ class PpmdEncoder:
         self.close()
 
 
-class PpmdDecoder:
+class Ppmd7Decoder:
 
     def __init__(self, source: BinaryIO, max_order: int, mem_size: int):
         if not source.readable:
             raise ValueError
-        self.ppmd = ffi.new('CPpmd7 *')
-        lib.ppmd_state_init(self.ppmd, max_order, mem_size)
-        self.rc = ffi.new('CPpmd7z_RangeDec *')
-        self.reader = ffi.new('RawReader *')
-        self.source = source  # read indirectly through self._userdata
-        self._userdata = ffi.new_handle(self)
-        self.closed = False
-        lib.ppmd_decompress_init(self.rc, self.reader, lib.src_readinto, self._userdata)
+        if _PPMD7_MIN_ORDER <= max_order <= _PPMD7_MAX_ORDER and _PPMD7_MIN_MEM_SIZE <= mem_size <= _PPMD7_MAX_MEM_SIZE:
+            self.ppmd = ffi.new('CPpmd7 *')
+            lib.ppmd_state_init(self.ppmd, max_order, mem_size)
+            self.rc = ffi.new('CPpmd7z_RangeDec *')
+            self.reader = ffi.new('RawReader *')
+            self.source = source  # read indirectly through self._userdata
+            self._userdata = ffi.new_handle(self)
+            self.closed = False
+            lib.ppmd_decompress_init(self.rc, self.reader, lib.src_readinto, self._userdata)
+        else:
+            raise ValueError("PPMd wrong parameters.")
 
     def decode(self, length) -> bytes:
         b = bytearray()
@@ -127,6 +130,10 @@ class PpmdDecoder:
         self.close()
 
 
+PpmdDecoder = Ppmd7Decoder
+PpmdEncoder = Ppmd7Encoder
+
+
 class Ppmd8Decoder:
 
     def __init__(self, source: BinaryIO, max_order: int, mem_size: int, restore: int):
@@ -140,7 +147,7 @@ class Ppmd8Decoder:
         self.restore = restore  # type: int
         lib.ppmd8_decompress_init(self.ppmd, self.reader, lib.src_readinto, self._userdata)
         lib.Ppmd8_Construct(self.ppmd)
-        lib.ppmd8_malloc(self.ppmd, mem_size << 20)
+        lib.ppmd8_malloc(self.ppmd, mem_size)
         lib.Ppmd8_RangeDec_Init(self.ppmd)
         lib.Ppmd8_Init(self.ppmd, max_order, restore)
 
@@ -180,7 +187,7 @@ class Ppmd8Encoder:
         self._userdata = ffi.new_handle(self)
         lib.ppmd8_compress_init(self.ppmd, self.writer, lib.dst_write, self._userdata)
         lib.Ppmd8_Construct(self.ppmd)
-        lib.ppmd8_malloc(self.ppmd, mem_size << 20)
+        lib.ppmd8_malloc(self.ppmd, mem_size)
         # lib.Ppmd8_RangeEnc_Init(self.ppmd)  # this is defined as macro
         self.ppmd.Low = 0
         self.ppmd.Range = 0xFFFFFFFF
@@ -261,9 +268,9 @@ class PpmdDecompressor:
         order = (hdr.info & 0x0f) + 1
         mem = ((hdr.info >> 4) & 0xff) + 1
         if hdr.version == 8:
-            self.decoder = Ppmd8Decoder(file, order, mem, restore)
+            self.decoder = Ppmd8Decoder(file, order, mem << 20, restore)
         elif hdr.version == 7:
-            self.decoder = Ppmd7Decoder(file, order, mem)
+            self.decoder = Ppmd7Decoder(file, order, mem << 20)
         else:
             raise ValueError("Unsupported PPMd version detected.")
         self.file = file
@@ -291,10 +298,10 @@ class PpmdCompressor:
     def __init__(self, ofile, order, mem, version=8):
         if version == 7:
             PpmdHeader(version=7).write(ofile, order, mem)
-            self.encoder = Ppmd7Encoder(ofile, order, mem)
+            self.encoder = Ppmd7Encoder(ofile, order, mem << 20)
         elif version == 8:
             PpmdHeader(version=8).write(ofile, order, mem, 0)
-            self.encoder = Ppmd8Encoder(ofile, order, mem, 0)
+            self.encoder = Ppmd8Encoder(ofile, order, mem << 20, 0)
         else:
             raise ValueError("Unsupported PPMd version.")
 

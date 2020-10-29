@@ -12,7 +12,7 @@ READ_BLOCKSIZE = 16384
 
 def test_ppmd_encoder():
     with io.BytesIO() as dst:
-        with ppmd.PpmdEncoder(dst, 6, 16 << 20) as encoder:
+        with ppmd.Ppmd7Encoder(dst, 6, 16 << 20) as encoder:
             encoder.encode(data)
             encoder.flush()
         result = dst.getvalue()
@@ -23,7 +23,7 @@ def test_ppmd_encoder():
 
 def test_ppmd_encoder2():
     with io.BytesIO() as dst:
-        with ppmd.PpmdEncoder(dst, 6, 16 << 20) as encoder:
+        with ppmd.Ppmd7Encoder(dst, 6, 16 << 20) as encoder:
             encoder.encode(data[:33])
             encoder.encode(data[33:])
             encoder.flush()
@@ -35,7 +35,7 @@ def test_ppmd_encoder2():
 
 def test_ppmd_decoder():
     with testdata_path.joinpath('ppmd7.dat').open('rb') as f:
-        with ppmd.PpmdDecoder(f, 6, 16 << 20) as decoder:
+        with ppmd.Ppmd7Decoder(f, 6, 16 << 20) as decoder:
             result = decoder.decode(33)
             result += decoder.decode(33)
             assert result == data
@@ -46,7 +46,7 @@ def test_ppmd_encode_decode(tmp_path):
     m = hashlib.sha256()
     with testdata_path.joinpath('10000SalesRecords.csv').open('rb') as f:
         with tmp_path.joinpath('target.ppmd').open('wb') as target:
-            with ppmd.PpmdEncoder(target, 6, 16 << 20) as enc:
+            with ppmd.Ppmd7Encoder(target, 6, 16 << 20) as enc:
                 data = f.read(READ_BLOCKSIZE)
                 while len(data) > 0:
                     m.update(data)
@@ -58,7 +58,7 @@ def test_ppmd_encode_decode(tmp_path):
     m2 = hashlib.sha256()
     with tmp_path.joinpath('target.ppmd').open('rb') as target:
         with tmp_path.joinpath('target.csv').open('wb') as out:
-            with ppmd.PpmdDecoder(target, 6, 16 << 20) as dec:
+            with ppmd.Ppmd7Decoder(target, 6, 16 << 20) as dec:
                 remaining = length
                 while remaining > 0:
                     max_length = min(remaining, READ_BLOCKSIZE)
