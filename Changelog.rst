@@ -25,6 +25,12 @@ Removed
 Security
 --------
 
+`v0.3.1`_
+=========
+
+* Rename to Ppmd7Encoder/Ppmd7Decoder from PpmdEncoder/PpmdDecoder for ver.H.
+
+
 `v0.3.0`_
 =========
 
