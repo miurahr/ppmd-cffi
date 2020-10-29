@@ -1,6 +1,7 @@
 import argparse
 import pathlib
 import struct
+import sys
 from typing import Any, BinaryIO, Optional
 
 try:
@@ -18,7 +19,7 @@ except PackageNotFoundError:  # pragma: no-cover
 
 from _ppmd import ffi, lib  # type: ignore  # noqa
 
-MAGIC = 0x84ACAF8F
+PPMD_HEADER_MAGIC = 0x84ACAF8F
 READ_BLOCKSIZE = 16384
 
 _PPMD7_MIN_ORDER = 2
@@ -213,16 +214,17 @@ class PpmdHeader:
 
     size = 16
 
-    def __init__(self):
+    def __init__(self, version=8):
         self.attr = 0x80
         self.info = 8 << 12
         self.fnlen = 1
         self.restore = 0
-        self.version = 8
+        self.version = version
 
     def read(self, file):
-        if struct.unpack("<I", file.read(4))[0] != MAGIC:
-            raise ValueError("Invalid header {}\n".format(self.magic))
+        magic = struct.unpack("<I", file.read(4))[0]
+        if magic != PPMD_HEADER_MAGIC:
+            raise ValueError("Invalid header {}\n".format(magic))
         self.attr = struct.unpack("<I", file.read(4))[0]
         self.info = struct.unpack("<H", file.read(2))[0]
         self.version = self.info >> 12
@@ -232,10 +234,13 @@ class PpmdHeader:
         file.read(2)
         file.read(fn_len & 0x1FF)
 
-    def write(self, file, order, mem, restore):
+    def write(self, file, order, mem, restore=0):
         self.info = (self.version << 12) | ((mem - 1) << 4) | (order - 1) & 0x0f
-        self.fnlen = 1 | (restore << 14)
-        file.write(struct.pack("<I", MAGIC))
+        if self.version == 8:
+            self.fnlen = 1 | (restore << 14)
+        else:
+            self.fnlen = 1
+        file.write(struct.pack("<I", PPMD_HEADER_MAGIC))
         file.write(struct.pack("<I", self.attr))
         file.write(struct.pack("<H", self.info))
         file.write(struct.pack("<H", self.fnlen))
@@ -247,7 +252,7 @@ class PpmdHeader:
         return self.size
 
 
-class Ppmd8Decompressor:
+class PpmdDecompressor:
 
     def __init__(self, file, filesize):
         hdr = PpmdHeader()
@@ -255,7 +260,12 @@ class Ppmd8Decompressor:
         restore = hdr.restore
         order = (hdr.info & 0x0f) + 1
         mem = ((hdr.info >> 4) & 0xff) + 1
-        self.decoder = Ppmd8Decoder(file, order, mem, restore)
+        if hdr.version == 8:
+            self.decoder = Ppmd8Decoder(file, order, mem, restore)
+        elif hdr.version == 7:
+            self.decoder = Ppmd7Decoder(file, order, mem)
+        else:
+            raise ValueError("Unsupported PPMd version detected.")
         self.file = file
         self.size = filesize
 
@@ -276,11 +286,17 @@ class Ppmd8Decompressor:
         return self
 
 
-class Ppmd8Compressor:
+class PpmdCompressor:
 
-    def __init__(self, ofile, order, mem):
-        PpmdHeader().write(ofile, order, mem, 0)
-        self.encoder = Ppmd8Encoder(ofile, order, mem, 0)
+    def __init__(self, ofile, order, mem, version=8):
+        if version == 7:
+            PpmdHeader(version=7).write(ofile, order, mem)
+            self.encoder = Ppmd7Encoder(ofile, order, mem)
+        elif version == 8:
+            PpmdHeader(version=8).write(ofile, order, mem, 0)
+            self.encoder = Ppmd8Encoder(ofile, order, mem, 0)
+        else:
+            raise ValueError("Unsupported PPMd version.")
 
     def compress(self, src):
         data = src.read(READ_BLOCKSIZE)
@@ -299,26 +315,46 @@ class Ppmd8Compressor:
         return self
 
 
+Ppmd8Decompressor = PpmdDecompressor
+Ppmd8Compressor = PpmdCompressor
+
+
 def main(arg: Optional[Any] = None):
     parser = argparse.ArgumentParser(prog='ppmd', description='ppmd')
-    parser.add_argument("-x", action="store_true")
+    parser.add_argument("-x", action="store_true", help="Specify decompression")
+    parser.add_argument("-c", action="store_true", help="Output to stdout")
+    parser.add_argument("-7", "--seven", action="store_true", help="Compress with PPMd ver.H instead of Ver.I")
     parser.add_argument("target")
     args = parser.parse_args(arg)
     targetfile = pathlib.Path(args.target)
     if args.x:
         if targetfile.suffix != '.ppmd':
-            print("Target file does not have .ppmd suffix.")
+            sys.stderr.write("Target file does not have .ppmd suffix.")
+            exit(1)
+        if args.seven:
+            sys.stderr.write("Cannot specify version for extraction.")
             exit(1)
         target_size = targetfile.stat().st_size
-        parent = targetfile.parent
-        extractedfile = pathlib.Path(parent.joinpath(targetfile.stem))
-        with extractedfile.open('wb') as ofile:
+        if args.c:
             with targetfile.open('rb') as target:
-                with Ppmd8Decompressor(target, target_size) as decompressor:
-                    decompressor.decompress(ofile)
+                with PpmdDecompressor(target, target_size) as decompressor:
+                    sys.stdout.flush()
+                    decompressor.decompress(sys.stdout.buffer)
+                    sys.stdout.buffer.flush()
+        else:
+            parent = targetfile.parent
+            extractedfile = pathlib.Path(parent.joinpath(targetfile.stem))
+            with extractedfile.open('wb') as ofile:
+                with targetfile.open('rb') as target:
+                    with PpmdDecompressor(target, target_size) as decompressor:
+                        decompressor.decompress(ofile)
     else:
         archivefile = pathlib.Path(str(targetfile) + '.ppmd')
         with archivefile.open('wb') as target:
             with targetfile.open('rb') as src:
-                with Ppmd8Compressor(target, 6, 8) as compressor:
-                    compressor.compress(src)
+                if args.seven:
+                    with PpmdCompressor(target, 6, 16, version=7) as compressor:
+                        compressor.compress(src)
+                else:
+                    with PpmdCompressor(target, 6, 8, version=8) as compressor:
+                        compressor.compress(src)
