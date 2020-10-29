@@ -10,8 +10,6 @@ All notable changes to this project will be documented in this file.
 Added
 -----
 
-* Add PPMd8 sources
-
 Changed
 -------
 
@@ -26,6 +24,14 @@ Removed
 
 Security
 --------
+
+`v0.3.0`_
+=========
+
+* Support PPMd ver.I (PPMd8) encoding.
+* Add CLI command ppmd that compress and decompress file using PPMd ver.I
+  It is intend to be compatible with ppmd-mini project.
+* Drop `*Buffered*` api
 
 `v0.2.5`_
 =========
@@ -100,7 +106,8 @@ v0.0.1
 
 
 .. History links
-.. _Unreleased: https://github.com/miurahr/py7zr/compare/v0.2.5...HEAD
+.. _Unreleased: https://github.com/miurahr/py7zr/compare/v0.3.0...HEAD
+.. _v0.3.0: https://github.com/miurahr/py7zr/compare/v0.2.5...v0.3.0
 .. _v0.2.5: https://github.com/miurahr/py7zr/compare/v0.2.4...v0.2.5
 .. _v0.2.4: https://github.com/miurahr/py7zr/compare/v0.2.3...v0.2.4
 .. _v0.2.3: https://github.com/miurahr/py7zr/compare/v0.2.2...v0.2.3

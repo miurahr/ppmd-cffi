@@ -18,10 +18,11 @@ PPMd for python
 
 
 PPM(Prediction by partial matching) is a compression algorithm which has several variations of implementations.
-PPMd is the implementation by Dmitry Shkarin. It is used in the RAR by default and by 7-Zip as one of several possible methods.
+PPMd is the implementation by Dmitry Shkarin. It is used in the RAR and by 7-Zip as one of several possible methods.
 
 ppmd, aka. ppmd-cffi, is a python bindings with PPMd implementation by C language.
-Codes are derived from p7zip, portable 7-zip implementation, for Ppmd7, PPMd ver.H and Ppmd8, PPMd ver.I.
+The C codes are derived from p7zip, portable 7-zip implementation.
+ppmd-cffi support PPMd ver.H and PPMd ver.I.
 
 Development status
 ==================
@@ -35,14 +36,17 @@ Installation
 As usual, you can install ppmd-cffi using python standard pip command.
 CAUTION: Since it is a bindings with C source code, C compiler should be installed on your operating system.
 
-```
-pip install ppmd-cffi
-```
+.. code-block::
 
-All C source codes are bundled with ppmd-cffi package.
+    pip install ppmd-cffi
 
-Usage
-=====
+
+All C source codes are bundled with ppmd-cffi package, and release provides binary wheels for
+Windows, MacOS, and manylinux.
+
+
+API Usage
+=========
 
 ppmd-cffi provide two classes. Both class supports context manager, ie. `with ... as ..` syntax.
 
@@ -50,11 +54,23 @@ PpmdEncoder, Ppmd8Encoder
 -------------------------
 
 Encoder class provide PPMd encoder. It has `encode()`, `flush()` and `close()` methods.
+PpmdEncoder encode data with PPMd ver.H. Ppmd8Encoder encode data with PPMd ver.I.
 
 PpmdDecoder, Ppmd8Decoder
 -------------------------
 
 Decoder class provide PPMd decoder. It has `decode()` and `close()` methods.
+
+
+Sample CLI
+==========
+
+ppmd-cffi provide small utility compress/decompress files.
+
+.. code-block::
+
+    $ ppmd target.txt
+    $ ppmd -x target.txt.ppmd
 
 
 License
