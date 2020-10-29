@@ -2,7 +2,6 @@ import binascii
 import hashlib
 import os
 import shutil
-import sys
 
 import pytest  # type: ignore
 
