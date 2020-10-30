@@ -25,6 +25,12 @@ Removed
 Security
 --------
 
+`v0.3.2`_
+=========
+
+* CLI: handle filename and timestamp properly.
+
+
 `v0.3.1`_
 =========
 
@@ -112,7 +118,9 @@ v0.0.1
 
 
 .. History links
-.. _Unreleased: https://github.com/miurahr/py7zr/compare/v0.3.0...HEAD
+.. _Unreleased: https://github.com/miurahr/py7zr/compare/v0.3.2...HEAD
+.. _v0.3.2: https://github.com/miurahr/py7zr/compare/v0.3.1...v0.3.2
+.. _v0.3.1: https://github.com/miurahr/py7zr/compare/v0.3.0...v0.3.1
 .. _v0.3.0: https://github.com/miurahr/py7zr/compare/v0.2.5...v0.3.0
 .. _v0.2.5: https://github.com/miurahr/py7zr/compare/v0.2.4...v0.2.5
 .. _v0.2.4: https://github.com/miurahr/py7zr/compare/v0.2.3...v0.2.4
