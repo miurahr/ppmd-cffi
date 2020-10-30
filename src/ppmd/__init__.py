@@ -1,7 +1,28 @@
+#
+# Copyright (c) 2019,2020 Hiroshi Miura <miurahr@linux.com>
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#
+
 import argparse
+import os
 import pathlib
 import struct
 import sys
+import time
+from datetime import datetime, timezone
 from typing import Any, BinaryIO, Optional
 
 try:
@@ -19,7 +40,7 @@ except PackageNotFoundError:  # pragma: no-cover
 
 from _ppmd import ffi, lib  # type: ignore  # noqa
 
-PPMD_HEADER_MAGIC = 0x84ACAF8F
+_PPMD_HEADER_MAGIC = b'\x8f\xaf\xac\x84'
 READ_BLOCKSIZE = 16384
 
 _PPMD7_MIN_ORDER = 2
@@ -27,6 +48,31 @@ _PPMD7_MAX_ORDER = 64
 
 _PPMD7_MIN_MEM_SIZE = 1 << 11
 _PPMD7_MAX_MEM_SIZE = 0xFFFFFFFF - 12 * 3
+
+
+def dostime_to_dt(dosdate, dostime):
+    """Convert a DOS time to a Python time tuple."""
+    day = dosdate & 0x1f
+    month = (dosdate >> 5) & 0xf
+    year = 1980 + (dosdate >> 9)
+    second = 2 * (dostime & 0x1f)
+    minute = (dostime >> 5) & 0x3f
+    hour = dostime >> 11
+    return datetime(year, month, day, hour=hour, minute=minute, second=second, tzinfo=timezone.utc)
+
+
+def dt_to_dostime(dt):
+    dosdate = (dt.year - 1980) << 9
+    dosdate |= dt.month << 5
+    dosdate |= dt.day
+    dostime = dt.second // 2
+    dostime |= dt.minute << 5
+    dostime |= dt.hour << 11
+    return (dosdate, dostime)
+
+
+def datetime_to_timestamp(dt):
+    return time.mktime(dt.timetuple()) + dt.microsecond / 1e6
 
 
 @ffi.def_extern()
@@ -221,39 +267,47 @@ class PpmdHeader:
 
     size = 16
 
-    def __init__(self, version=8):
+    def __init__(self, *, fname='a', ftime=0, version=8, order=6, mem_in_mb=8, restore=0):
+        self.time = ftime
         self.attr = 0x80
-        self.info = 8 << 12
-        self.fnlen = 1
-        self.restore = 0
+        self.info = (version << 12) | ((mem_in_mb - 1) << 4) | (order - 1) & 0x0f
+        self.fnlen = len(fname.encode('UTF-8'))
+        self.restore = restore
         self.version = version
+        if self.version == 8:
+            self.fnlen |= restore << 14
+        self.filename = fname
 
     def read(self, file):
-        magic = struct.unpack("<I", file.read(4))[0]
-        if magic != PPMD_HEADER_MAGIC:
-            raise ValueError("Invalid header {}\n".format(magic))
+        magic = file.read(4)
+        if magic != _PPMD_HEADER_MAGIC:
+            raise ValueError("Invalid Header magic: {}".format(magic))
         self.attr = struct.unpack("<I", file.read(4))[0]
         self.info = struct.unpack("<H", file.read(2))[0]
-        self.version = self.info >> 12
         fn_len = struct.unpack("<H", file.read(2))[0]
+        dosdate = struct.unpack("<H", file.read(2))[0]
+        dostime = struct.unpack("<H", file.read(2))[0]
+        self.time = dostime_to_dt(dosdate, dostime)
+        self.version = self.info >> 12
         self.restore = fn_len >> 14
-        file.read(2)
-        file.read(2)
-        file.read(fn_len & 0x1FF)
+        if self.restore > 2:
+            raise ValueError("Invalid Header: wrong restore param")
+        if self.version >= 8:
+            fn_len = fn_len & 0x03FF
+        if fn_len > (1 << 9):
+            raise ValueError("Invalid Header: wrong file name length")
+        assert fn_len > 0
+        self.filename = file.read(fn_len).decode('UTF-8')
 
-    def write(self, file, order, mem, restore=0):
-        self.info = (self.version << 12) | ((mem - 1) << 4) | (order - 1) & 0x0f
-        if self.version == 8:
-            self.fnlen = 1 | (restore << 14)
-        else:
-            self.fnlen = 1
-        file.write(struct.pack("<I", PPMD_HEADER_MAGIC))
+    def write(self, file):
+        file.write(_PPMD_HEADER_MAGIC)
         file.write(struct.pack("<I", self.attr))
         file.write(struct.pack("<H", self.info))
         file.write(struct.pack("<H", self.fnlen))
-        file.write(b'\x00\x00')
-        file.write(b'\x00\x00')
-        file.write(b'a')
+        dosdate, dostime = dt_to_dostime(self.time)
+        file.write(struct.pack("<H", dosdate))
+        file.write(struct.pack("<H", dostime))
+        file.write(self.filename.encode('UTF-8'))
 
     def __len__(self):
         return self.size
@@ -274,7 +328,9 @@ class PpmdDecompressor:
         else:
             raise ValueError("Unsupported PPMd version detected.")
         self.file = file
+        self.filename = hdr.filename
         self.size = filesize
+        self.ftime = hdr.time
 
     def decompress(self, ofile):
         while self.file.tell() < self.size:
@@ -295,12 +351,12 @@ class PpmdDecompressor:
 
 class PpmdCompressor:
 
-    def __init__(self, ofile, order, mem, version=8):
+    def __init__(self, ofile, fname, ftime, order, mem, version=8):
         if version == 7:
-            PpmdHeader(version=7).write(ofile, order, mem)
+            PpmdHeader(fname=fname, ftime=ftime, version=7, order=order, mem_in_mb=mem).write(ofile)
             self.encoder = Ppmd7Encoder(ofile, order, mem << 20)
         elif version == 8:
-            PpmdHeader(version=8).write(ofile, order, mem, 0)
+            PpmdHeader(fname=fname, ftime=ftime, version=8, order=order, mem_in_mb=mem, restore=0).write(ofile)
             self.encoder = Ppmd8Encoder(ofile, order, mem << 20, 0)
         else:
             raise ValueError("Unsupported PPMd version.")
@@ -350,18 +406,21 @@ def main(arg: Optional[Any] = None):
                     sys.stdout.buffer.flush()
         else:
             parent = targetfile.parent
-            extractedfile = pathlib.Path(parent.joinpath(targetfile.stem))
-            with extractedfile.open('wb') as ofile:
-                with targetfile.open('rb') as target:
-                    with PpmdDecompressor(target, target_size) as decompressor:
+            with targetfile.open('rb') as target:
+                with PpmdDecompressor(target, target_size) as decompressor:
+                    extractedfile = pathlib.Path(parent.joinpath(decompressor.filename))
+                    with extractedfile.open('wb') as ofile:
                         decompressor.decompress(ofile)
+                        timestamp = datetime_to_timestamp(decompressor.ftime)
+                        os.utime(str(extractedfile), times=(timestamp, timestamp))
     else:
         archivefile = pathlib.Path(str(targetfile) + '.ppmd')
         with archivefile.open('wb') as target:
             with targetfile.open('rb') as src:
+                ftime = datetime.utcfromtimestamp(targetfile.stat().st_mtime)
                 if args.seven:
-                    with PpmdCompressor(target, 6, 16, version=7) as compressor:
+                    with PpmdCompressor(target, str(targetfile), ftime, 6, 16, version=7) as compressor:
                         compressor.compress(src)
                 else:
-                    with PpmdCompressor(target, 6, 8, version=8) as compressor:
+                    with PpmdCompressor(target, str(targetfile), ftime, 6, 8, version=8) as compressor:
                         compressor.compress(src)
