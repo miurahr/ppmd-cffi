@@ -72,7 +72,7 @@ def dt_to_dostime(dt):
 
 
 def datetime_to_timestamp(dt):
-    return time.mktime(dt.timetuple()) + dt.microsecond/1e6
+    return time.mktime(dt.timetuple()) + dt.microsecond / 1e6
 
 
 @ffi.def_extern()
