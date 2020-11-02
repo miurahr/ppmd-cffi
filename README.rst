@@ -27,7 +27,7 @@ ppmd-cffi support PPMd ver.H and PPMd ver.I.
 Development status
 ==================
 
-A development status is considered as `Alpha` state.
+A development status is considered as `Beta` state.
 
 
 Installation
