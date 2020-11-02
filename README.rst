@@ -48,29 +48,11 @@ CAUTION: Since it is a bindings with C source code, C compiler should be install
     pip install ppmd-cffi
 
 
-All C source codes are bundled with ppmd-cffi package, and release provides binary wheels for
-Windows, MacOS, and manylinux.
+All C extension sources are bundled with ppmd-cffi source package, and release provides binary wheels for
+Windows 64-bit, MacOS X, and Linux.
 
-
-API Usage
-=========
-
-ppmd-cffi provide two classes. Both class supports context manager, ie. `with ... as ..` syntax.
-
-PpmdEncoder, Ppmd8Encoder
--------------------------
-
-Encoder class provide PPMd encoder. It has `encode()`, `flush()` and `close()` methods.
-PpmdEncoder encode data with PPMd ver.H. Ppmd8Encoder encode data with PPMd ver.I.
-
-PpmdDecoder, Ppmd8Decoder
--------------------------
-
-Decoder class provide PPMd decoder. It has `decode()` and `close()` methods.
-
-
-Sample CLI
-==========
+Command
+=======
 
 ppmd-cffi provide small utility compress/decompress files.
 
