@@ -29,6 +29,13 @@ Development status
 
 A development status is considered as `Beta` state.
 
+Manuals
+=======
+
+You can find a manual at the readthedocs_
+
+.. _readthedocs: https://ppmd-cffi.readthedocs.io/en/latest/user_guide.html
+
 
 Installation
 ============
