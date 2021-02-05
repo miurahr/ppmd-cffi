@@ -1,4 +1,4 @@
-from _ppmd import ffi as ffi, lib as lib
+#from _ppmd import ffi as ffi, lib as lib
 from typing import Any, BinaryIO, Optional
 
 READ_BLOCKSIZE: int

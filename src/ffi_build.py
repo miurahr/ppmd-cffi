@@ -239,7 +239,7 @@ static Byte Read(void *p)
     int size = br->src_readinto(&b, 1, br->userdata);
     if (size <= 0)
         return 0;
-	return (Byte) b;
+    return (Byte) b;
 }
 
 void ppmd_state_init(CPpmd7 *p, unsigned int maxOrder, unsigned int memSize)
@@ -301,7 +301,7 @@ void ppmd8_decompress_init(CPpmd8 *p, RawReader *reader,
     reader->src_readinto = src_readinto;
     reader->userdata = userdata;
     p->Stream.In = (IByteIn *) reader;
-} 
+}
 ''', sources=sources, include_dirs=[src_root])
 
 if __name__ == "__main__":  # not when running with setuptools
