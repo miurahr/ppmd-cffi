@@ -25,6 +25,14 @@ Removed
 Security
 --------
 
+`v0.3.3`_
+=========
+
+* Change to beta status
+* Measure test coverage
+* Add type hint stubs
+
+
 `v0.3.2`_
 =========
 
@@ -118,7 +126,8 @@ v0.0.1
 
 
 .. History links
-.. _Unreleased: https://github.com/miurahr/py7zr/compare/v0.3.2...HEAD
+.. _Unreleased: https://github.com/miurahr/py7zr/compare/v0.3.3...HEAD
+.. _v0.3.3: https://github.com/miurahr/py7zr/compare/v0.3.2...v0.3.3
 .. _v0.3.2: https://github.com/miurahr/py7zr/compare/v0.3.1...v0.3.2
 .. _v0.3.1: https://github.com/miurahr/py7zr/compare/v0.3.0...v0.3.1
 .. _v0.3.0: https://github.com/miurahr/py7zr/compare/v0.2.5...v0.3.0
