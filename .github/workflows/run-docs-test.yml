@@ -16,7 +16,7 @@ jobs:
       - name: Install dependencies
         run: pip install build twine sphinx
       - name: Build sphinx docs
-        run: sphinx-build {posargs:-E} -b html docs build/docs
+        run: sphinx-build {posargs:-E} -b html docs html
       - name: Check source package
         run: |
           python -m build --sdist .
