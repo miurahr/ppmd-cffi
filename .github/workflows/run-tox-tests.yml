@@ -23,7 +23,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -U pip
-          pip install tox tox-gh-actions coveralls
+          pip install build tox tox-gh-actions coveralls twine
       - name: Test project with tox
         run: |
           tox
@@ -34,6 +34,10 @@ jobs:
           COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
           COVERALLS_PARALLEL: true
           COVERALLS_FLAG_NAME: py-${{ matrix.python-version }}-${{ matrix.os }}
+      - name: Test release document
+        run: |
+          python -m build --sdist .
+          twine check dist/*
   finish:
     runs-on: ubuntu-latest
     name: finish parallel build
