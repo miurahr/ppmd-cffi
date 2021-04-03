@@ -25,6 +25,25 @@ Removed
 Security
 --------
 
+`v0.4.0`_
+=========
+
+Added
+-----
+
+* Test case to check range of max_order and mem_size
+
+Changed
+-------
+
+* Allocate internal buffer memory with Python's memory manager.
+
+Removed
+-------
+
+* Stop publish of AArch64 anylinux package
+
+
 `v0.3.3`_
 =========
 
@@ -126,7 +145,8 @@ v0.0.1
 
 
 .. History links
-.. _Unreleased: https://github.com/miurahr/py7zr/compare/v0.3.3...HEAD
+.. _Unreleased: https://github.com/miurahr/py7zr/compare/v0.4.0...HEAD
+.. _v0.4.0: https://github.com/miurahr/py7zr/compare/v0.3.3...v0.4.0
 .. _v0.3.3: https://github.com/miurahr/py7zr/compare/v0.3.2...v0.3.3
 .. _v0.3.2: https://github.com/miurahr/py7zr/compare/v0.3.1...v0.3.2
 .. _v0.3.1: https://github.com/miurahr/py7zr/compare/v0.3.0...v0.3.1
