@@ -23,7 +23,7 @@ import struct
 import sys
 import time
 from datetime import datetime, timezone
-from typing import Any, BinaryIO, Optional, Dict
+from typing import Any, BinaryIO, Optional
 
 try:
     from importlib.metadata import PackageNotFoundError
