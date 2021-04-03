@@ -23,7 +23,7 @@ import struct
 import sys
 import time
 from datetime import datetime, timezone
-from typing import Any, BinaryIO, Optional
+from typing import Any, BinaryIO, Optional, Dict
 
 try:
     from importlib.metadata import PackageNotFoundError
@@ -92,6 +92,24 @@ def src_readinto(b: bytes, size: int, userdata: object) -> int:
     return result
 
 
+_allocated = []
+
+
+@ffi.def_extern()
+def raw_alloc(size: int) -> object:
+    if size == 0:
+        return ffi.NULL
+    block = ffi.new("char[]", size)
+    _allocated.append(block)
+    return block
+
+
+@ffi.def_extern()
+def raw_free(o: object) -> None:
+    if o in _allocated:
+        _allocated.remove(o)
+
+
 class Ppmd7Encoder:
 
     def __init__(self, destination: BinaryIO, max_order: int, mem_size: int):
@@ -102,8 +120,11 @@ class Ppmd7Encoder:
             self.ppmd = ffi.new('CPpmd7 *')
             self.rc = ffi.new('CPpmd7z_RangeEnc *')
             self.writer = ffi.new('RawWriter *')
+            self._allocator = ffi.new('ISzAlloc *')
+            self._allocator.Alloc = lib.raw_alloc
+            self._allocator.Free = lib.raw_free
             self._userdata = ffi.new_handle(self)
-            lib.ppmd_state_init(self.ppmd, max_order, mem_size)
+            lib.ppmd_state_init(self.ppmd, max_order, mem_size, self._allocator)
             lib.ppmd_compress_init(self.rc, self.writer, lib.dst_write, self._userdata)
         else:
             raise ValueError("PPMd wrong parameters.")
@@ -122,7 +143,7 @@ class Ppmd7Encoder:
         if self.closed:
             return
         self.closed = True
-        lib.ppmd_state_close(self.ppmd)
+        lib.ppmd_state_close(self.ppmd, self._allocator)
         ffi.release(self.ppmd)
         ffi.release(self.writer)
         ffi.release(self.rc)
@@ -143,7 +164,10 @@ class Ppmd7Decoder:
             raise ValueError
         if _PPMD7_MIN_ORDER <= max_order <= _PPMD7_MAX_ORDER and _PPMD7_MIN_MEM_SIZE <= mem_size <= _PPMD7_MAX_MEM_SIZE:
             self.ppmd = ffi.new('CPpmd7 *')
-            lib.ppmd_state_init(self.ppmd, max_order, mem_size)
+            self._allocator = ffi.new('ISzAlloc *')
+            self._allocator.Alloc = lib.raw_alloc
+            self._allocator.Free = lib.raw_free
+            lib.ppmd_state_init(self.ppmd, max_order, mem_size, self._allocator)
             self.rc = ffi.new('CPpmd7z_RangeDec *')
             self.reader = ffi.new('RawReader *')
             self.source = source  # read indirectly through self._userdata
@@ -165,7 +189,7 @@ class Ppmd7Decoder:
     def close(self):
         if self.closed:
             return
-        lib.ppmd_state_close(self.ppmd)
+        lib.ppmd_state_close(self.ppmd, self._allocator)
         ffi.release(self.ppmd)
         ffi.release(self.reader)
         ffi.release(self.rc)
@@ -190,12 +214,15 @@ class Ppmd8Decoder:
         self.ppmd = ffi.new('CPpmd8 *')
         self.reader = ffi.new('RawReader *')
         self._userdata = ffi.new_handle(self)
+        self._allocator = ffi.new('ISzAlloc *')
         self.max_order = max_order  # type: int
         self.mem_size = mem_size  # type: int
         self.restore = restore  # type: int
+        self._allocator.Alloc = lib.raw_alloc
+        self._allocator.Free = lib.raw_free
         lib.ppmd8_decompress_init(self.ppmd, self.reader, lib.src_readinto, self._userdata)
         lib.Ppmd8_Construct(self.ppmd)
-        lib.ppmd8_malloc(self.ppmd, mem_size)
+        lib.ppmd8_malloc(self.ppmd, mem_size, self._allocator)
         lib.Ppmd8_RangeDec_Init(self.ppmd)
         lib.Ppmd8_Init(self.ppmd, max_order, restore)
 
@@ -212,7 +239,7 @@ class Ppmd8Decoder:
 
     def close(self):
         if not self.closed:
-            lib.ppmd8_mfree(self.ppmd)
+            lib.ppmd8_mfree(self.ppmd, self._allocator)
             ffi.release(self.ppmd)
             ffi.release(self.reader)
             self.closed = True
@@ -233,9 +260,12 @@ class Ppmd8Encoder:
         self.ppmd = ffi.new('CPpmd8 *')
         self.writer = ffi.new('RawWriter *')
         self._userdata = ffi.new_handle(self)
+        self._allocator = ffi.new('ISzAlloc *')
+        self._allocator.Alloc = lib.raw_alloc
+        self._allocator.Free = lib.raw_free
         lib.ppmd8_compress_init(self.ppmd, self.writer, lib.dst_write, self._userdata)
         lib.Ppmd8_Construct(self.ppmd)
-        lib.ppmd8_malloc(self.ppmd, mem_size)
+        lib.ppmd8_malloc(self.ppmd, mem_size, self._allocator)
         # lib.Ppmd8_RangeEnc_Init(self.ppmd)  # this is defined as macro
         self.ppmd.Low = 0
         self.ppmd.Range = 0xFFFFFFFF
@@ -253,7 +283,7 @@ class Ppmd8Encoder:
 
     def close(self):
         if not self.closed:
-            lib.ppmd8_mfree(self.ppmd)
+            lib.ppmd8_mfree(self.ppmd, self._allocator)
             self.closed = True
             ffi.release(self.ppmd)
             ffi.release(self.writer)
