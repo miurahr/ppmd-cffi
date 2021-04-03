@@ -26,7 +26,7 @@ def test_ppmd7_fuzzer(obj, max_order, mem_size):
 
 
 if __name__ == "__main__":
-    import atheris
+    import atheris  # type: ignore  # noqa
 
     atheris.Setup(sys.argv, test_ppmd7_fuzzer.hypothesis.fuzz_one_input)
     atheris.Fuzz()
