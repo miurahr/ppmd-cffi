@@ -25,10 +25,10 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install pep517 and twine
-      run: python -m pip install pep517 twine --user
+    - name: Install dependency
+      run: python -m pip install build twine
     - name: Build a wheel package
-      run: python -m pep517.build --binary --out-dir dist/ ./
+      run: python -m build --wheel .
     - name: Publish distribution 📦 to Test PyPI
       if: startsWith(github.event.ref, 'refs/heads/main')
       run: python -m twine upload dist/*.whl
