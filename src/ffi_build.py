@@ -35,6 +35,12 @@ struct IByteOut
 {
   void (*Write)(const IByteOut *p, Byte b);
 };
+struct ISzAlloc
+{
+  void *(*Alloc)(size_t size);
+  void (*Free)(void *address); /* address can be NULL */
+};
+typedef struct ISzAlloc ISzAlloc;
 ''')
 
 # Ppmd.h
@@ -196,8 +202,11 @@ typedef struct {
 extern "Python" int src_readinto(char *, int, void *);
 extern "Python" void dst_write(char *, int, void *);
 
-void ppmd_state_init(CPpmd7 *ppmd, unsigned int maxOrder, unsigned int memSize);
-void ppmd_state_close(CPpmd7 *ppmd);
+extern "Python" void *raw_alloc(size_t);
+extern "Python" void raw_free(void *);
+
+void ppmd_state_init(CPpmd7 *ppmd, unsigned int maxOrder, unsigned int memSize, ISzAlloc *allocator);
+void ppmd_state_close(CPpmd7 *ppmd, ISzAlloc *allocator);
 int ppmd_decompress_init(CPpmd7z_RangeDec *rc, RawReader *reader, int (*src_readingo)(char *, int, void*), void *userdata);
 void ppmd_compress_init(CPpmd7z_RangeEnc *rc, RawWriter *write, void (*dst_write)(char *, int, void*), void *userdata);
 
@@ -209,8 +218,8 @@ void Ppmd7z_RangeEnc_Init(CPpmd7z_RangeEnc *p);
 void Ppmd7z_RangeEnc_FlushData(CPpmd7z_RangeEnc *p);
 void Ppmd7_EncodeSymbol(CPpmd7 *p, CPpmd7z_RangeEnc *rc, int symbol);
 
-void ppmd8_malloc(CPpmd8 *p, unsigned int memSize);
-void ppmd8_mfree(CPpmd8 *ppmd);
+void ppmd8_malloc(CPpmd8 *p, unsigned int memSize, ISzAlloc *allocator);
+void ppmd8_mfree(CPpmd8 *ppmd, ISzAlloc *allocator);
 void ppmd8_decompress_init(CPpmd8 *p, RawReader *reader, int (*src_readinto)(char*, int, void*), void *userdata);
 void ppmd8_compress_init(CPpmd8 *p, RawWriter *writer, void (*dst_write)(char*, int, void*), void *userdata);
 
@@ -242,16 +251,16 @@ static Byte Read(void *p)
     return (Byte) b;
 }
 
-void ppmd_state_init(CPpmd7 *p, unsigned int maxOrder, unsigned int memSize)
+void ppmd_state_init(CPpmd7 *p, unsigned int maxOrder, unsigned int memSize, ISzAlloc *allocator)
 {
     Ppmd7_Construct(p);
-    Ppmd7_Alloc(p, memSize, &allocator);
+    Ppmd7_Alloc(p, memSize, allocator);
     Ppmd7_Init(p, maxOrder);
 }
 
-void ppmd_state_close(CPpmd7 *ppmd)
+void ppmd_state_close(CPpmd7 *ppmd, ISzAlloc *allocator)
 {
-    Ppmd7_Free(ppmd, &allocator);
+    Ppmd7_Free(ppmd, allocator);
 }
 
 void ppmd_compress_init(CPpmd7z_RangeEnc *rc, RawWriter *writer,
@@ -275,14 +284,14 @@ int ppmd_decompress_init(CPpmd7z_RangeDec *rc, RawReader *reader,
     return res;
 }
 
-void ppmd8_malloc(CPpmd8 *p, unsigned int memSize)
+void ppmd8_malloc(CPpmd8 *p, unsigned int memSize, ISzAlloc *allocator)
 {
-    Ppmd8_Alloc(p, memSize, &allocator);
+    Ppmd8_Alloc(p, memSize, allocator);
 }
 
-void ppmd8_mfree(CPpmd8 *ppmd)
+void ppmd8_mfree(CPpmd8 *ppmd, ISzAlloc *allocator)
 {
-    Ppmd8_Free(ppmd, &allocator);
+    Ppmd8_Free(ppmd, allocator);
 }
 
 void ppmd8_compress_init(CPpmd8 *p, RawWriter *writer,

@@ -9,20 +9,6 @@
 #define putc_unlocked fputc
 #endif
 
-static void *pmalloc(ISzAllocPtr ip, size_t size)
-{
-    (void) ip;
-    return malloc(size);
-}
-
-static void pfree(ISzAllocPtr ip, void *addr)
-{
-    (void) ip;
-    free(addr);
-}
-
-static ISzAlloc allocator = { pmalloc, pfree };
-
 typedef struct {
     /* Inherits from IByteOut */
     void (*Write)(void *p, Byte b);
@@ -38,8 +24,8 @@ typedef struct {
 } RawReader;
 
 // ppmd7
-void ppmd_state_init(CPpmd7 *ppmd, unsigned int maxOrder, unsigned int memSize);
-void ppmd_state_close(CPpmd7 *ppmd);
+void ppmd_state_init(CPpmd7 *ppmd, unsigned int maxOrder, unsigned int memSize, ISzAlloc *allocator);
+void ppmd_state_close(CPpmd7 *ppmd, ISzAlloc *allocator);
 int ppmd_decompress_init(CPpmd7z_RangeDec *rc, RawReader *reader, int (*src_readingo)(char *, int, void*), void *userdata);
 void ppmd_compress_init(CPpmd7z_RangeEnc *rc, RawWriter *write, void (*dst_write)(char *, int, void*), void *userdata);
 
@@ -52,8 +38,8 @@ void Ppmd7z_RangeEnc_FlushData(CPpmd7z_RangeEnc *p);
 void Ppmd7_EncodeSymbol(CPpmd7 *p, CPpmd7z_RangeEnc *rc, int symbol);
 
 // ppmd8
-void ppmd8_state_init(CPpmd8 *p, unsigned int maxOrder, unsigned int memSize, unsigned int restore);
-void ppmd8_state_close(CPpmd8 *p);
+void ppmd8_malloc(CPpmd8 *p, unsigned int memSize, ISzAlloc *allocator);
+void ppmd8_free(CPpmd8 *p, ISzAlloc *allocator);
 
 Bool Ppmd8_RangeDec_Init(CPpmd8 *p);
 void Ppmd8_Init(CPpmd8 *p, unsigned maxOrder, unsigned restoreMethod);

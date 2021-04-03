@@ -285,25 +285,17 @@ struct ICompressProgress
 #define ICompressProgress_Progress(p, inSize, outSize) (p)->Progress(p, inSize, outSize)
 
 
-
 typedef struct ISzAlloc ISzAlloc;
 typedef const ISzAlloc * ISzAllocPtr;
 
 struct ISzAlloc
 {
-  void *(*Alloc)(ISzAllocPtr p, size_t size);
-  void (*Free)(ISzAllocPtr p, void *address); /* address can be 0 */
+  void *(*Alloc)(size_t size);
+  void (*Free)(void *address); /* address can be NULL */
 };
 
-#define ISzAlloc_Alloc(p, size) (p)->Alloc(p, size)
-#define ISzAlloc_Free(p, a) (p)->Free(p, a)
-
-/* deprecated */
-#define IAlloc_Alloc(p, size) ISzAlloc_Alloc(p, size)
-#define IAlloc_Free(p, a) ISzAlloc_Free(p, a)
-
-
-
+#define ISzAlloc_Alloc(p, size) (p)->Alloc(size)
+#define ISzAlloc_Free(p, a) (p)->Free(a)
 
 
 #ifndef MY_offsetof
