@@ -165,6 +165,9 @@ MY_CPU_LE_UNALIGN means that CPU is LITTLE ENDIAN and CPU supports unaligned mem
   #error Stop_Compiling_Bad_Endian
 #endif
 
+#if !defined(MY_CPU_LE) && !defined(MY_CPU_BE)
+  #error Stop_Compiling_Bad_Endian
+#endif
 
 #if defined(MY_CPU_32BIT) && defined(MY_CPU_64BIT)
   #error Stop_Compiling_Bad_32_64_BIT
@@ -174,16 +177,12 @@ MY_CPU_LE_UNALIGN means that CPU is LITTLE ENDIAN and CPU supports unaligned mem
 #ifndef MY_CPU_NAME
   #ifdef MY_CPU_LE
     #define MY_CPU_NAME "LE"
-  #elif MY_CPU_BE
+  #elif defined(MY_CPU_BE)
     #define MY_CPU_NAME "BE"
   #else
-    /*
-    #define MY_CPU_NAME ""
-    */
+    #error Stop_Compiling_Bad_Endian
   #endif
 #endif
-
-
 
 
 
