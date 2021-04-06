@@ -1,4 +1,5 @@
 import os
+import platform
 import shutil
 
 import pytest  # type: ignore
@@ -9,6 +10,7 @@ testdata_path = os.path.join(os.path.dirname(__file__), 'data')
 source = b'This file is located in a folder.This file is located in the root.\n'
 
 
+@pytest.mark.skipif(platform.machine()=="aarch64", reason="argsys in aarch64 may have a bug")
 def test_cli_help(capsys):
     expected = '''usage: ppmd [-h] [-x] [-c] [-7] target
 
