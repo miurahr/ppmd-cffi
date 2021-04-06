@@ -44,6 +44,7 @@ typedef struct ISzAlloc ISzAlloc;
 ''')
 
 # Ppmd.h
+# Ppmd7.h
 ffibuilder.cdef(r'''
 /* SEE-contexts for PPM-contexts with masked symbols */
 typedef struct
@@ -60,26 +61,17 @@ typedef struct
   UInt16 SuccessorLow;
   UInt16 SuccessorHigh;
 } CPpmd_State;
-''')
-
-if is_64bit():
-    ffibuilder.cdef('typedef UInt32 CPpmd_State_Ref;')
-    ffibuilder.cdef('typedef UInt32 CPpmd_Void_Ref;')
-else:
-    ffibuilder.cdef('typedef CPpmd_State * CPpmd_State_Ref;')
-    ffibuilder.cdef('typedef void * CPpmd_Void_Ref;')
-
-# Ppmd7.h
-ffibuilder.cdef(r'''
 struct CPpmd7_Context_;
 ''')
 
 if is_64bit():
-    ffibuilder.cdef('typedef UInt32 CPpmd7_Context_Ref;')
     ffibuilder.cdef('typedef UInt32 CPpmd_State_Ref;')
+    ffibuilder.cdef('typedef UInt32 CPpmd7_Context_Ref;')
+    ffibuilder.cdef('typedef UInt32 CPpmd_Void_Ref;')
 else:
+    ffibuilder.cdef('typedef CPpmd_State * CPpmd_State_Ref;')
     ffibuilder.cdef('typedef struct CPpmd7_Context_ CPpmd7_Context_Ref;')
-    ffibuilder.cdef('typedef struct CPpmd_State_ * CPpmd_State_Ref;')
+    ffibuilder.cdef('typedef void * CPpmd_Void_Ref;')
 
 ffibuilder.cdef(r'''
 typedef struct CPpmd7_Context_
