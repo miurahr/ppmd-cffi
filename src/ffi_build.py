@@ -61,17 +61,16 @@ typedef struct
   UInt16 SuccessorLow;
   UInt16 SuccessorHigh;
 } CPpmd_State;
-struct CPpmd7_Context_;
 ''')
 
 if is_64bit():
     ffibuilder.cdef('typedef UInt32 CPpmd_State_Ref;')
-    ffibuilder.cdef('typedef UInt32 CPpmd7_Context_Ref;')
     ffibuilder.cdef('typedef UInt32 CPpmd_Void_Ref;')
+    ffibuilder.cdef('typedef UInt32 CPpmd7_Context_Ref;')
 else:
     ffibuilder.cdef('typedef CPpmd_State * CPpmd_State_Ref;')
-    ffibuilder.cdef('typedef struct CPpmd7_Context_ CPpmd7_Context_Ref;')
     ffibuilder.cdef('typedef void * CPpmd_Void_Ref;')
+    ffibuilder.cdef('struct CPpmd7_Context_; typedef struct CPpmd7_Context_ CPpmd7_Context_Ref;')
 
 ffibuilder.cdef(r'''
 typedef struct CPpmd7_Context_
@@ -81,8 +80,7 @@ typedef struct CPpmd7_Context_
   CPpmd_State_Ref Stats;
   CPpmd7_Context_Ref Suffix;
 } CPpmd7_Context;
-''')
-ffibuilder.cdef(r'''
+
 typedef struct
 {
   CPpmd7_Context *MinContext, *MaxContext;
@@ -102,9 +100,6 @@ typedef struct
   CPpmd_See DummySee, See[25][16];
   UInt16 BinSumm[128][64];
 } CPpmd7;
-''')
-
-ffibuilder.cdef(r'''
 typedef struct
 {
   UInt32 Range;
