@@ -2,12 +2,14 @@
 on:
   milestone:
     types: [closed]
+
 name: Milestone Closure
 jobs:
   create-release-notes:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@master
+    - name: Checkout 🛎️
+      uses: actions/checkout@master
     - name: Create Release Notes
       uses: docker://decathlon/release-notes-generator-action:2.0.0
       env:
