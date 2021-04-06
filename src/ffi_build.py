@@ -70,7 +70,7 @@ if is_64bit():
 else:
     ffibuilder.cdef('typedef CPpmd_State * CPpmd_State_Ref;')
     ffibuilder.cdef('typedef void * CPpmd_Void_Ref;')
-    ffibuilder.cdef('struct CPpmd7_Context_; typedef struct CPpmd7_Context_ CPpmd7_Context_Ref;')
+    ffibuilder.cdef('struct CPpmd7_Context_; typedef struct CPpmd7_Context_ * CPpmd7_Context_Ref;')
 
 ffibuilder.cdef(r'''
 typedef struct CPpmd7_Context_
