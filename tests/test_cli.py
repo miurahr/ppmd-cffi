@@ -1,4 +1,5 @@
 import os
+import platform
 import shutil
 
 import pytest  # type: ignore
@@ -9,6 +10,8 @@ testdata_path = os.path.join(os.path.dirname(__file__), 'data')
 source = b'This file is located in a folder.This file is located in the root.\n'
 
 
+@pytest.mark.skipif(platform.machine() in ("aarch64", "armv7", "ppc64le", "s390x"),
+                    reason="argparse help may have a bug around print function in some arches.")
 def test_cli_help(capsys):
     expected = '''usage: ppmd [-h] [-x] [-c] [-7] target
 

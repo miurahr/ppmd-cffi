@@ -113,6 +113,8 @@ def raw_free(o: object) -> None:
 class Ppmd7Encoder:
 
     def __init__(self, destination: BinaryIO, max_order: int, mem_size: int):
+        if mem_size > sys.maxsize:
+            raise ValueError("Mem_size exceed to platform limit.")
         if _PPMD7_MIN_ORDER <= max_order <= _PPMD7_MAX_ORDER and _PPMD7_MIN_MEM_SIZE <= mem_size <= _PPMD7_MAX_MEM_SIZE:
             self.closed = False
             self.flushed = False
@@ -161,7 +163,9 @@ class Ppmd7Decoder:
 
     def __init__(self, source: BinaryIO, max_order: int, mem_size: int):
         if not source.readable:
-            raise ValueError
+            raise ValueError("Source stream is not readable")
+        if mem_size > sys.maxsize:
+            raise ValueError("Mem_size exceed to platform limit.")
         if _PPMD7_MIN_ORDER <= max_order <= _PPMD7_MAX_ORDER and _PPMD7_MIN_MEM_SIZE <= mem_size <= _PPMD7_MAX_MEM_SIZE:
             self.ppmd = ffi.new('CPpmd7 *')
             self._allocator = ffi.new('ISzAlloc *')

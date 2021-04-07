@@ -5,13 +5,9 @@ This code is based on PPMd var.H (2001): Dmitry Shkarin : Public domain */
 #ifndef __PPMD_H
 #define __PPMD_H
 
-#include "CpuArch.h"
+#include "PpmdArch.h"
 
 EXTERN_C_BEGIN
-
-#ifdef MY_CPU_32BIT
-  #define PPMD_32BIT
-#endif
 
 #define PPMD_INT_BITS 7
 #define PPMD_PERIOD_BITS 7

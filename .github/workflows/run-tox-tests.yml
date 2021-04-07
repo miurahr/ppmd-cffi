@@ -12,7 +12,7 @@ jobs:
         exclude:
           - os: windows-latest
             python-version: pypy3
-    name: Test on Python ${{ matrix.python-version }}
+    name: Test on Python ${{ matrix.python-version }} (${{ matrix.os }})
     steps:
       - name: Checkout 🛎️
         uses: actions/checkout@v2
@@ -49,34 +49,3 @@ jobs:
               -d "payload[build_num]=$GITHUB_SHA&payload[status]=done"
         env:
           COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
-
-  # Run test on armv7/aarch64/ppc64le/s390x
-  test_on_arches:
-    name: Test on ${{ matrix.distro }} ${{ matrix.arch }}
-    runs-on: ubuntu-20.04
-
-    strategy:
-      matrix:
-        arch: [armv7, aarch64, ppc64le, s390x]
-        distro: [ubuntu20.04]
-
-    steps:
-      - name: Checkout 🛎️
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 20
-      - uses: uraimo/run-on-arch-action@v2.0.9
-        name: Build & run test
-        with:
-          arch: ${{ matrix.arch }}
-          distro: ${{ matrix.distro }}
-
-          install: |
-            apt-get update -q -y
-            apt-get install -q -y python3 python3-pip python3-cffi build-essential gcc git libffi-dev
-
-          run: |
-            python3 -c "import platform;print('Machine type:', platform.machine())"
-            python3 -m pip install -U pip
-            python3 -m pip install tox
-            python3 -m tox -e py38
