@@ -5,7 +5,7 @@ This code is based on PPMd var.H (2001): Dmitry Shkarin : Public domain */
 #ifndef __PPMD_H
 #define __PPMD_H
 
-#include "CpuArch.h"
+#include "PpmdArch.h"
 
 EXTERN_C_BEGIN
 

@@ -10,14 +10,12 @@
 #endif
 
 typedef struct {
-    /* Inherits from IByteOut */
     void (*Write)(void *p, Byte b);
     void (*dst_write)(char *buf, int size, void *userdata);
     void *userdata;
 } RawWriter;
 
 typedef struct {
-    /* Inherits from IByteIn */
     Byte (*Read)(void *p);
     int (*src_readinto)(char *buf, int size, void *userdata);
     void *userdata;
