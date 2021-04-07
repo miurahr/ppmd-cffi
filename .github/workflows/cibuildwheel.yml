@@ -123,7 +123,6 @@ jobs:
           password: ${{ secrets.testpypi_password }}
           repository_url: https://test.pypi.org/legacy/
           skip_existing: true
-          packages_dir: publish/
           verbose: true
       - name: Publish distribution 📦 to PyPI
         if: startsWith(github.event.ref, 'refs/tags')
@@ -132,5 +131,4 @@ jobs:
           user: __token__
           password: ${{ secrets.pypi_password }}
           skip_existing: true
-          packages_dir: publish/
           verbose: true
