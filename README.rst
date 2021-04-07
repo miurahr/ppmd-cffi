@@ -16,7 +16,6 @@ PPMd for python
 
 
 
-
 PPM(Prediction by partial matching) is a compression algorithm which has several variations of implementations.
 PPMd is the implementation by Dmitry Shkarin. It is used in the RAR and by 7-Zip as one of several possible methods.
 
@@ -41,15 +40,11 @@ Installation
 ============
 
 As usual, you can install ppmd-cffi using python standard pip command.
-CAUTION: Since it is a bindings with C source code, C compiler should be installed on your operating system.
 
 .. code-block::
 
     pip install ppmd-cffi
 
-
-All C extension sources are bundled with ppmd-cffi source package, and release provides binary wheels for
-Windows 64-bit, MacOS X, and Linux.
 
 Command
 =======
@@ -65,7 +60,7 @@ ppmd-cffi provide small utility compress/decompress files.
 License
 =======
 
-* Copyright (C) 2020 Hiroshi Miura
+* Copyright (C) 2020,2021 Hiroshi Miura
 
 * 7-Zip Copyright (C) 1999-2010 Igor Pavlov
 * LZMA SDK Copyright (C) 1999-2010 Igor Pavlov
