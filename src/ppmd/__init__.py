@@ -131,9 +131,9 @@ class Ppmd7Encoder:
         else:
             raise ValueError("PPMd wrong parameters.")
 
-    def encode(self, inbuf) -> None:
-        for sym in inbuf:
-            lib.Ppmd7_EncodeSymbol(self.ppmd, self.rc, sym)
+    def encode(self, data: bytes) -> None:
+        inbuf = ffi.from_buffer(data)
+        lib.ppmd_compress(self.ppmd, self.rc, inbuf, len(data))
 
     def flush(self):
         if self.flushed:
@@ -182,13 +182,11 @@ class Ppmd7Decoder:
             raise ValueError("PPMd wrong parameters.")
 
     def decode(self, length) -> bytes:
-        b = bytearray()
-        for _ in range(length):
-            sym = lib.Ppmd7_DecodeSymbol(self.ppmd, self.rc)
-            b += sym.to_bytes(1, 'little')
+        b = ffi.new("char[]", length)
+        lib.ppmd_decompress(self.ppmd, self.rc, b, length)
         if self.rc.Code != 0:
             pass  # FIXME
-        return bytes(b)
+        return bytes(ffi.buffer(b))
 
     def close(self):
         if self.closed:

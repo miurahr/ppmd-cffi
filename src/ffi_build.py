@@ -196,6 +196,8 @@ void ppmd_state_init(CPpmd7 *ppmd, unsigned int maxOrder, unsigned int memSize, 
 void ppmd_state_close(CPpmd7 *ppmd, ISzAlloc *allocator);
 int ppmd_decompress_init(CPpmd7z_RangeDec *rc, RawReader *reader, int (*src_readingo)(char *, int, void*), void *userdata);
 void ppmd_compress_init(CPpmd7z_RangeEnc *rc, RawWriter *write, void (*dst_write)(char *, int, void*), void *userdata);
+void ppmd_compress(CPpmd7 *p, CPpmd7z_RangeEnc *rc, char *buf, int size);
+void ppmd_decompress(CPpmd7 *p, CPpmd7z_RangeDec *rc, char *buf, int size);
 
 void Ppmd7_Construct(CPpmd7 *p);
 void Ppmd7_Init(CPpmd7 *p, unsigned maxOrder);
@@ -297,6 +299,21 @@ void ppmd8_decompress_init(CPpmd8 *p, RawReader *reader,
     reader->src_readinto = src_readinto;
     reader->userdata = userdata;
     p->Stream.In = (IByteIn *) reader;
+}
+
+void ppmd_compress(CPpmd7 *p, CPpmd7z_RangeEnc *rc, char *buf, int size) {
+    unsigned char *c = buf;
+    while (c < buf + size) {
+        Ppmd7_EncodeSymbol(p, rc, *c++);
+    }
+}
+
+int ppmd_decompress(CPpmd7 *p, CPpmd7z_RangeDec *rc, char *buf, int size) {
+    unsigned char *c = buf;
+    while (c < buf + size) {
+        *c++ = Ppmd7_DecodeSymbol(p, rc);
+    }
+    return size; 
 }
 ''', sources=sources, include_dirs=[src_root])
 
