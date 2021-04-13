@@ -313,7 +313,7 @@ int ppmd_decompress(CPpmd7 *p, CPpmd7z_RangeDec *rc, char *buf, int size) {
     while (c < buf + size) {
         *c++ = Ppmd7_DecodeSymbol(p, rc);
     }
-    return size; 
+    return size;
 }
 ''', sources=sources, include_dirs=[src_root])
 
