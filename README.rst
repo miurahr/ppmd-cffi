@@ -20,8 +20,9 @@ Notice
 ======
 
 A project PPMd(ppmd-cffi) now stopped development.
-You are recommended to use PyPPMd that is a successor project.
+You are recommended to use PyPPMd_ that is a successor project.
 
+.. _PyPPMd: https://pypi.org/project/pyppmd/
 
 PPM(Prediction by partial matching) is a compression algorithm which has several variations of implementations.
 PPMd is the implementation by Dmitry Shkarin. It is used in the RAR and by 7-Zip as one of several possible methods.
