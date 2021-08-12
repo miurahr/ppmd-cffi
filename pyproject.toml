@@ -25,14 +25,13 @@ warn_redundant_casts = true
 warn_unused_ignores = false
 strict_optional = true
 show_column_numbers = true
-files = *.py
+files = "*.py"
 
 [tool.pytest.ini_options]
 minversion = "6.0"
 testpaths = ["tests"]
 python_files = "test*.py"
 norecursedirs = [".git", "_build", "tmp", ".eggs"]
-addopts = --cov-config=pyproject.toml --cov --cov-append
 
 [tool.tox]
 legacy_tox_ini = """
