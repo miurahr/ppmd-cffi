@@ -8,11 +8,11 @@ PPMd for python
 .. image:: https://badge.fury.io/py/ppmd-cffi.svg
   :target: https://badge.fury.io/py/ppmd-cffi
 
-.. image:: https://github.com/miurahr/ppmd/workflows/Run%20Tox%20tests/badge.svg
-  :target: https://github.com/miurahr/ppmd/actions
+.. image:: https://github.com/miurahr/ppmd-cffi/workflows/Run%20Tox%20tests/badge.svg
+  :target: https://github.com/miurahr/ppmd-cffi/actions
 
-.. image:: https://coveralls.io/repos/github/miurahr/ppmd/badge.svg?branch=main
-  :target: https://coveralls.io/github/miurahr/ppmd?branch=main
+.. image:: https://coveralls.io/repos/github/miurahr/ppmd-cffi/badge.svg?branch=main
+  :target: https://coveralls.io/github/miurahr/ppmd-cffi?branch=main
 
 
 
