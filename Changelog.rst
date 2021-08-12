@@ -30,6 +30,10 @@ Security
 
 * Change github repository name from ppmd to ppmd-cffi
 
+Changed
+-------
+* Set configurations on pyproject.toml(#14)
+
 `v0.4.2`_
 =========
 
