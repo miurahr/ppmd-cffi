@@ -25,10 +25,13 @@ Removed
 Security
 --------
 
-`v0.4.2`_
+`v0.5.0`_
 =========
 
-* Last release, now deprecated. You are recommended to use PyPPMd for successor.
+* Change github repository name from ppmd to ppmd-cffi
+
+`v0.4.2`_
+=========
 
 Changed
 -------
@@ -175,7 +178,8 @@ v0.0.1
 
 
 .. History links
-.. _Unreleased: https://github.com/miurahr/py7zr/compare/v0.4.2...HEAD
+.. _Unreleased: https://github.com/miurahr/py7zr/compare/v0.5.0...HEAD
+.. _v0.5.0: https://github.com/miurahr/py7zr/compare/v0.4.1...v0.5.0
 .. _v0.4.2: https://github.com/miurahr/py7zr/compare/v0.4.1...v0.4.2
 .. _v0.4.1: https://github.com/miurahr/py7zr/compare/v0.4.0...v0.4.1
 .. _v0.4.0: https://github.com/miurahr/py7zr/compare/v0.3.3...v0.4.0
