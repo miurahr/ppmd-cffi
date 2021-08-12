@@ -30,9 +30,15 @@ Security
 
 * Change github repository name from ppmd to ppmd-cffi
 
+Added
+-----
+* Add CodeQL static code analysis
+* Add dependabot dependency checker
+
 Changed
 -------
 * Set configurations on pyproject.toml(#14)
+* README: change status to maintance
 
 `v0.4.2`_
 =========
