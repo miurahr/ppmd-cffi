@@ -1,6 +1,6 @@
 name: Run Tox tests
 
-on: push
+on: [push, pull_request]
 
 jobs:
   build:
@@ -32,9 +32,9 @@ jobs:
           tox
       - name: Send coverage to coveralls
         run: |
-          coveralls
+          coveralls --service=github
         env:
-          COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COVERALLS_PARALLEL: true
           COVERALLS_FLAG_NAME: py-${{ matrix.python-version }}-${{ matrix.os }}
 
@@ -64,16 +64,15 @@ jobs:
             python3 -m tox -e py38
 
   finish:
+    name: Indicate completion to coveralls.io
     runs-on: ubuntu-latest
-    name: finish parallel build
+    container: python:3-slim
     needs:
       - build
-      - test_on_aarch64
     steps:
       - name: Tell Coveralls that the parallel build is finished
         run: |
-          curl -k \
-              https://coveralls.io/webhook?repo_token=$COVERALLS_REPO_TOKEN \
-              -d "payload[build_num]=$GITHUB_SHA&payload[status]=done"
+          pip3 install --upgrade coveralls
+          coveralls --finish --service=github
         env:
-          COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
