@@ -16,20 +16,21 @@ PPMd for python
 
 
 
-Notice
-======
 
-A project PPMd(ppmd-cffi) now stopped development.
-You are recommended to use PyPPMd_ that is a successor project.
-
-.. _PyPPMd: https://pypi.org/project/pyppmd/
 
 PPM(Prediction by partial matching) is a compression algorithm which has several variations of implementations.
 PPMd is the implementation by Dmitry Shkarin. It is used in the RAR and by 7-Zip as one of several possible methods.
 
-ppmd, aka. ppmd-cffi, is a python bindings with PPMd implementation by C language.
+ppmd-cffi is a python bindings with PPMd implementation by C language.
 The C codes are derived from p7zip, portable 7-zip implementation.
-ppmd-cffi support PPMd ver.H and PPMd ver.I.
+ppmd-cffi supports PPMd var.H and PPMd var.I.
+
+
+PyPPMd_ is a brother project that use python buffer protocol for interface.
+It supports PPMd var.H, and PPMd var. I on posix platforms(mac and linux).
+It supports CPython and PyPy. 
+
+.. _PyPPMd: https://pypi.org/project/pyppmd/
 
 Manuals
 =======
