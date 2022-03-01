@@ -35,7 +35,7 @@ jobs:
       - name: Fetch release tags
         run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
       - name: Set up Python 🐍
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v3
         with:
           python-version: 3.8
 
@@ -83,7 +83,7 @@ jobs:
       - name: Fetch release tags
         run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
       - name: Set up Python 🐍
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v3
       - name: Build source distribution & wheels
         run: |
           python setup.py sdist --formats=gztar
