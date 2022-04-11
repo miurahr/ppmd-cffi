@@ -56,7 +56,7 @@ jobs:
       #  cp*manylinux1_i686
       #  pp*manylinux1_x86_64
       - name: Upload wheels
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: ppmd-files
           path: |
@@ -92,13 +92,13 @@ jobs:
           python -m cibuildwheel --output-dir wheelhouse
 
       - name: Upload source distribution
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: ppmd-files
           path: dist/*.tar.gz
 
       - name: Upload manylinux1_x86_64
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: ppmd-files
           path: |
